@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -51,15 +52,17 @@ public class LoginController implements ActionListener {
         public LoginScreen() {
 
 
-            this.setSize(300, 150);
+            this.setSize(300, 450);
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
 
-            this.getContentPane().add(new JLabel ("Store Management System"));
+            this.getContentPane().add(new JLabel ("Event Online Ticketing System"));
 
             JPanel main = new JPanel(new SpringLayout());
             main.add(new JLabel("Username:"));
+            txtUserName.setPreferredSize(new Dimension(150, 25));
             main.add(txtUserName);
             main.add(new JLabel("Password:"));
+            txtPassword.setPreferredSize(new Dimension(150, 25));
             main.add(txtPassword);
 
             SpringUtilities.makeCompactGrid(main,
