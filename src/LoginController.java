@@ -59,10 +59,16 @@ public class LoginController implements ActionListener {
 
             JPanel main = new JPanel(new SpringLayout());
             main.add(new JLabel("Username:"));
-            txtUserName.setPreferredSize(new Dimension(150, 25));
+            //fix the field size
+            Dimension size = new Dimension(150, 25);
+            txtUserName.setPreferredSize(size);
+            txtUserName.setMinimumSize(size);
+            txtUserName.setMaximumSize(size);
             main.add(txtUserName);
             main.add(new JLabel("Password:"));
-            txtPassword.setPreferredSize(new Dimension(150, 25));
+            txtPassword.setPreferredSize(size);
+            txtPassword.setMinimumSize(size);
+            txtPassword.setMaximumSize(size);
             main.add(txtPassword);
 
             SpringUtilities.makeCompactGrid(main,
