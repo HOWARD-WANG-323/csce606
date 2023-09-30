@@ -201,6 +201,8 @@ public class DataAdapter {
                 Event event = new Event();
                 event.setEventID(resultSet.getInt("eventID"));
                 event.setEventName(resultSet.getString("eventName"));
+                event.setEventDate(resultSet.getString("eventDate"));
+                event.setEventDescription(resultSet.getString("eventDescription"));
                 event.setEventLocation(resultSet.getString("eventLocation"));
                 events.add(event);
             }

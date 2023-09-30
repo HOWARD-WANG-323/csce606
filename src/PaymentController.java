@@ -120,6 +120,7 @@ public class PaymentController implements ActionListener {
             ticketView.getSelectButton().addActionListener(te -> {
                 Ticket selectedTicket = ticketView.getSelectedTicket();
                 // Add the selected ticket to the shopping cart
+
                 view.addRow(new Object[]{
 
                         selectedEvent.getEventName(),  // Assuming you can access the event's name from the selectedEvent object
@@ -145,8 +146,12 @@ public class PaymentController implements ActionListener {
         private JButton btnSetCard = new JButton("Set Card");
         private JButton btnPay = new JButton("Make a payment");
 
-        private DefaultTableModel items = new DefaultTableModel(); // store information for the table!
-
+        private DefaultTableModel items = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         private JTable tblItems = new JTable(items);
         private JLabel labTotal = new JLabel("Total: ");
 
@@ -201,5 +206,6 @@ public class PaymentController implements ActionListener {
         public void addRow(Object[] row) {
             items.addRow(row);
         }
+
     }
 }

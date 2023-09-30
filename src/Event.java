@@ -41,4 +41,12 @@ public class Event {
     public String getEventDescription() {
         return eventDescription;
     }
+
+    public void setEventDate(String eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public void setEventDescription(String eventDescription) {
+        this.eventDescription = eventDescription;
+    }
 }
