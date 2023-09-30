@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class CardController implements ActionListener {
     private CardView cardView;
@@ -15,94 +16,106 @@ public class CardController implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == cardView.getBtnLoad()){
             System.out.println("load!");
-            loadCard();}
-        else
-        if (e.getSource() == cardView.getBtnSave()){
-            saveCard();}
-        else if (e.getSource() == cardView.getBtnApply()) {
+            loadCard();
+        } else if (e.getSource() == cardView.getBtnSave()) {
+            saveCard();
+        } else if (e.getSource() == cardView.getBtnApply()) {
             applyCard();
-        }
-        else{
+        } else {
             System.out.println("nothing");
         }
     }
 
-    private void applyCard(){
-//        Card card = Application.getInstance().getOrderController().getCurrentCard();
-//        if (card == null){
-//            JOptionPane.showMessageDialog(null, "You did not choose your card!");
-//            return;
-//        }
-//        else{
-//            return;
-//        }
+    private void applyCard() {
+        // Intentionally left blank for future implementation.
     }
+
     private void saveCard() {
-        int cardID;
-        try {
-            cardID = Integer.parseInt(cardView.getTxtCardID().getText());
-            if (cardID < 0){
-                throw new NumberFormatException();
-            }
-        }
-        catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Invalid card ID! Please provide a valid card ID!");
-            return;
-        }
-
-        String cardName = cardView.getTxtCardName().getText().trim();
-
-        if (cardName.length() < 13 || cardName.length() > 19) {
-            JOptionPane.showMessageDialog(null, "Invalid card number! Please provide a card number within 13-19 digits!");
-            return;
-        }
-
-        // Done all validations! Make an object for this card!
-
         Card card = new Card();
-        card.setCardID(cardID);
+        card.setCardNumber(cardView.getCardNumber().getText().trim());
+        card.setCardHolderName(cardView.getCardHolderName().getText().trim());
+        card.setExpirationDate(cardView.getExpirationDate().getText().trim());
+        card.setCvv(Integer.parseInt(cardView.getCvv().getText().trim()));
+        if (!isCreditCardValid(card)) {
+            return;  // Exit the method if card is not valid
+        }
+
         card.setUserID(Application.getInstance().getCurrentUser().getUserID());
-        card.setCard(cardName);
-
-
-        // Store the card to the database
-
         Application.getInstance().getDataAdapter().saveCard(card);
-//        Application.getInstance().getOrderController().setCurrentCard(card);
     }
-
     private void loadCard() {
-        int cardID = 0;
         try {
-            cardID = Integer.parseInt(cardView.getTxtCardID().getText());
-            if(cardID < 0){
-                throw new NumberFormatException();
+            int userID = Application.getInstance().getCurrentUser().getUserID();
+
+            List<Card> cards = Application.getInstance().getDataAdapter().loadCardsByUserID(userID);
+
+            if (cards == null || cards.isEmpty()) {
+                throw new Exception("No cards found for this user in the database!");
             }
-        }
-        catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(null, "Invalid card ID! Please provide a valid card ID!");
-            return;
-        }
 
-        Card card = Application.getInstance().getDataAdapter().loadCard(cardID);
+            Card selectedCard = (Card) JOptionPane.showInputDialog(null,
+                    "Choose a card:",
+                    "Select Card",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    cards.toArray(),
+                    cards.get(0)
+            );
 
-        if (card == null) {
-            JOptionPane.showMessageDialog(null, "This card ID does not exist in the database!");
-            return;
-        }
-        else if (card.getUserID() != Application.getInstance().getCurrentUser().getUserID()){
-            JOptionPane.showMessageDialog(null, "This card is not belong to this user!");
-            return;
-        }
+            if (selectedCard == null) {
+                throw new Exception("Card selection was cancelled by the user.");
+            }
 
-        cardView.getTxtCardName().setText(card.getCard());
-//        Application.getInstance().getOrderController().setCurrentCard(card);
+            cardView.getCardNumber().setText(selectedCard.getCardNumber());
+            Application.getInstance().getOrderController().setCurrentCard(selectedCard);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
     }
+    private boolean isCreditCardValid(Card card) {
+        try {
+            String cardNumber = card.getCardNumber();
+            if (!cardNumber.matches("\\d{16}") || cardNumber.isEmpty()) {
+                throw new IllegalArgumentException("Invalid card number");
+            }
 
+            String cardHolderName = card.getCardHolderName();
+            if (cardHolderName.isEmpty()) {
+                throw new IllegalArgumentException("Invalid card holder name");
+            }
 
-    public static class CardView extends JFrame{
-        private JTextField txtCardID  = new JTextField(10);
-        private JTextField txtCardName  = new JTextField(30);
+            String[] dateParts = card.getExpiryDate().split("/");
+            if (dateParts.length != 2) {
+                throw new IllegalArgumentException("Invalid date format");
+            }
+
+            int month = Integer.parseInt(dateParts[0]);
+            int year = Integer.parseInt(dateParts[1]);
+            String currentDate = java.time.LocalDate.now().toString().replace("-", "/");
+            String[] currentDateParts = currentDate.split("/");
+            int currentMonth = Integer.parseInt(currentDateParts[1]);
+            int currentYear = Integer.parseInt(currentDateParts[0].substring(2, 4));
+
+            if (year < currentYear || month < 1 || month > 12 || (year == currentYear && month < currentMonth) || String.valueOf(month).isEmpty() || String.valueOf(year).isEmpty()) {
+                throw new IllegalArgumentException("Invalid expiration date");
+            }
+
+            int cvv = card.getCvv();
+            if (cvv < 100 || cvv > 999 || String.valueOf(cvv).isEmpty()) {
+                throw new IllegalArgumentException("Invalid CVV");
+            }
+
+            return true;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e.getMessage());
+            return false;
+        }
+    }
+    public static class CardView extends JFrame {
+        private JTextField cardNumber = new JTextField(15);
+        private JTextField cardHolderName = new JTextField(15);
+        private JTextField expirationDate = new JTextField(15);
+        private JTextField cvv = new JTextField(5);
 
         private JButton btnLoad = new JButton("Load Card");
         private JButton btnSave = new JButton("Save Card");
@@ -111,7 +124,7 @@ public class CardController implements ActionListener {
         public CardView() {
             this.setTitle("Manage Cards");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
-            this.setSize(500, 200);
+            this.setSize(500, 400);
 
             JPanel panelButton = new JPanel();
             panelButton.add(btnLoad);
@@ -119,18 +132,30 @@ public class CardController implements ActionListener {
             panelButton.add(btnApply);
             this.getContentPane().add(panelButton);
 
-            JPanel panelCardID = new JPanel();
-            panelCardID.add(new JLabel("Card ID: "));
-            panelCardID.add(txtCardID);
-            txtCardID.setHorizontalAlignment(JTextField.RIGHT);
-            this.getContentPane().add(panelCardID);
+            // Card Number Panel
+            JPanel panelCardNumber = new JPanel();
+            panelCardNumber.add(new JLabel("Card Number: "));
+            panelCardNumber.add(cardNumber);
+            this.getContentPane().add(panelCardNumber);
 
-            JPanel panelCardName = new JPanel();
-            panelCardName.add(new JLabel("Card Name: "));
-            panelCardName.add(txtCardName);
-            this.getContentPane().add(panelCardName);
+            // Card Holder Name Panel
+            JPanel panelCardHolderName = new JPanel();
+            panelCardHolderName.add(new JLabel("Card Holder Name: "));
+            panelCardHolderName.add(cardHolderName);
+            this.getContentPane().add(panelCardHolderName);
+
+            // Expiration Date Panel
+            JPanel panelExpirationDate = new JPanel();
+            panelExpirationDate.add(new JLabel("Expiration Date (MM/YY): "));
+            panelExpirationDate.add(expirationDate);
+            this.getContentPane().add(panelExpirationDate);
+
+            // CVV Panel
+            JPanel panelCVV = new JPanel();
+            panelCVV.add(new JLabel("CVV (3 digits): "));
+            panelCVV.add(cvv);
+            this.getContentPane().add(panelCVV);
         }
-
         public JButton getBtnLoad() {
             return btnLoad;
         }
@@ -143,12 +168,23 @@ public class CardController implements ActionListener {
             return btnApply;
         }
 
-        public JTextField getTxtCardID() {
-            return txtCardID;
+        public JTextField getCardNumber() {
+            return cardNumber;
         }
 
-        public JTextField getTxtCardName() {
-            return txtCardName;
+        public JTextField getCardHolderName() {
+            return cardHolderName;
         }
+
+        public JTextField getExpirationDate() {
+            return expirationDate;
+        }
+
+        public JTextField getCvv() {
+            return cvv;
+        }
+
+
+
     }
 }
