@@ -1,8 +1,6 @@
 public class Address {
     private int addressID;
-
     private int userID;
-
     private String address;
 
     public int getUserID() {

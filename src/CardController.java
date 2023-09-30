@@ -28,14 +28,14 @@ public class CardController implements ActionListener {
     }
 
     private void applyCard(){
-        Card card = Application.getInstance().getOrderController().getCurrentCard();
-        if (card == null){
-            JOptionPane.showMessageDialog(null, "You did not choose your card!");
-            return;
-        }
-        else{
-            return;
-        }
+//        Card card = Application.getInstance().getOrderController().getCurrentCard();
+//        if (card == null){
+//            JOptionPane.showMessageDialog(null, "You did not choose your card!");
+//            return;
+//        }
+//        else{
+//            return;
+//        }
     }
     private void saveCard() {
         int cardID;
@@ -68,7 +68,7 @@ public class CardController implements ActionListener {
         // Store the card to the database
 
         Application.getInstance().getDataAdapter().saveCard(card);
-        Application.getInstance().getOrderController().setCurrentCard(card);
+//        Application.getInstance().getOrderController().setCurrentCard(card);
     }
 
     private void loadCard() {
@@ -96,7 +96,7 @@ public class CardController implements ActionListener {
         }
 
         cardView.getTxtCardName().setText(card.getCard());
-        Application.getInstance().getOrderController().setCurrentCard(card);
+//        Application.getInstance().getOrderController().setCurrentCard(card);
     }
 
 

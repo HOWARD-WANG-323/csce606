@@ -30,9 +30,10 @@ public class Application {
     }
 
 
-    private ProductController.ProductView productView = new ProductController.ProductView();
+    private TicketController.TicketView ticketView = new TicketController.TicketView();
 
-    private OrderController.OrderView orderView = new OrderController.OrderView();
+    private PaymentController.PaymentView paymentView = new PaymentController.PaymentView();
+
 
     private MainScreen mainScreen = new MainScreen();
 
@@ -49,13 +50,14 @@ public class Application {
         return mainScreen;
     }
 
-    public ProductController.ProductView getProductView() {
-        return productView;
+    public TicketController.TicketView getTicketView() {
+        return ticketView;
     }
 
-    public OrderController.OrderView getOrderView() {
-        return orderView;
+    public PaymentController.PaymentView getPaymentView() {
+        return paymentView;
     }
+
 
     public LoginController.LoginScreen loginScreen = new LoginController.LoginScreen();
 
@@ -65,14 +67,19 @@ public class Application {
 
     public LoginController loginController;
 
-    private ProductController productController;
+    private TicketController ticketController;
+    private PaymentController paymentController;
 
     private AddressController addressController;
 
     private CardController cardController;
 
-    public ProductController getProductController() {
-        return productController;
+    public TicketController getTicketController() {
+        return ticketController;
+    }
+
+    public PaymentController getPaymentController() {
+        return paymentController;
     }
     public AddressController getAddressController() {
         return addressController;
@@ -81,11 +88,6 @@ public class Application {
         return cardController;
     }
 
-    private OrderController orderController;
-
-    public OrderController getOrderController() {
-        return orderController;
-    }
 
     public DataAdapter getDataAdapter() {
         return dataAdapter;
@@ -114,13 +116,13 @@ public class Application {
             System.exit(2);
         }
 
-        productController = new ProductController(productView);
+        ticketController = new TicketController(ticketView);
+
+        paymentController = new PaymentController(paymentView);
 
         addressController = new AddressController(addressView);
 
         cardController = new CardController(cardView);
-
-        orderController = new OrderController(orderView);
 
         loginController = new LoginController(loginScreen);
     }

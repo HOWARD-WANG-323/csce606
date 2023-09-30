@@ -5,8 +5,8 @@ import java.awt.event.ActionListener;
 
 public class MainScreen extends JFrame {
 
-    private JButton btnBuy = new JButton("Order View");
-    private JButton btnSell = new JButton("Product View");
+    private JButton btnBuy = new JButton("Buy Ticket");
+    private JButton btnFind = new JButton("Find Ticket");
 
     public void logined(){
         User curUser = Application.getInstance().getCurrentUser();
@@ -25,7 +25,7 @@ public class MainScreen extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setSize(400, 300);
 
-        btnSell.setPreferredSize(new Dimension(120, 50));
+        btnFind.setPreferredSize(new Dimension(120, 50));
         btnBuy.setPreferredSize(new Dimension(120, 50));
         System.out.println("mainScreen load");
 //        User curUser = Application.getInstance().getCurrentUser();
@@ -40,19 +40,18 @@ public class MainScreen extends JFrame {
 
         JPanel panelButton = new JPanel();
         panelButton.add(btnBuy);
-        panelButton.add(btnSell);
+        panelButton.add(btnFind);
 
         this.getContentPane().add(panelButton);
 
         btnBuy.addActionListener(new ActionListener() { // when controller is simple, we can declare it on the fly
             public void actionPerformed(ActionEvent e) {
-                Application.getInstance().getOrderView().setVisible(true);            }
+                Application.getInstance().getPaymentView().setVisible(true);            }
         });
 
-
-        btnSell.addActionListener(new ActionListener() { // when controller is simple, we can declare it on the fly
+        btnFind.addActionListener(new ActionListener() { // when controller is simple, we can declare it on the fly
             public void actionPerformed(ActionEvent e) {
-                Application.getInstance().getProductView().setVisible(true);
+                Application.getInstance().getTicketView().setVisible(true);
             }
         });
     }

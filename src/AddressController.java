@@ -28,14 +28,14 @@ public class AddressController implements ActionListener {
     }
 
     private void applyAddress(){
-        Address address = Application.getInstance().getOrderController().getCurrentAddress();
-        if (address == null){
-            JOptionPane.showMessageDialog(null, "You did not choose your address!");
-            return;
-        }
-        else{
-            return;
-        }
+//        Address address = Application.getInstance().getOrderController().getCurrentAddress();
+//        if (address == null){
+//            JOptionPane.showMessageDialog(null, "You did not choose your address!");
+//            return;
+//        }
+//        else{
+//            return;
+//        }
     }
     private void saveAddress() {
         int addressID;
@@ -68,7 +68,7 @@ public class AddressController implements ActionListener {
         // Store the address to the database
 
         Application.getInstance().getDataAdapter().saveAddress(address);
-        Application.getInstance().getOrderController().setCurrentAddress(address);
+//        Application.getInstance().getOrderController().setCurrentAddress(address);
     }
 
     private void loadAddress() {
@@ -93,7 +93,7 @@ public class AddressController implements ActionListener {
         }
 
         addressView.getTxtAddressName().setText(address.getAddress());
-        Application.getInstance().getOrderController().setCurrentAddress(address);
+//        Application.getInstance().getOrderController().setCurrentAddress(address);
     }
 
 
