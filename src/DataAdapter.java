@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataAdapter {
     private Connection connection;
@@ -186,6 +188,33 @@ public class DataAdapter {
             System.out.println("Database access error!");
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public List<Event> loadAllEvents() {
+        List<Event> events = new ArrayList<>();
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM Events");
+
+            while (resultSet.next()) {
+                Event event = new Event();
+                event.setEventID(resultSet.getInt("eventID"));
+                event.setEventName(resultSet.getString("eventName"));
+                event.setEventLocation(resultSet.getString("eventLocation"));
+                events.add(event);
+            }
+
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return events;
+    }
+    public List<Ticket> loadTicketsByEventId(int eventId) {
+        //todo: implement this method
         return null;
     }
 }

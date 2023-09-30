@@ -2,16 +2,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainScreen extends JFrame {
 
     private JButton btnBuy = new JButton("Buy Ticket");
     private JButton btnFind = new JButton("Find Ticket");
-
     public void logined(){
         User curUser = Application.getInstance().getCurrentUser();
         JLabel user = new JLabel("Current User: " + curUser.getUsername());
-        user.setFont(new Font("Sans Serif", Font.BOLD, 24));
+        user.setFont(new Font("Sans Serif", Font.PLAIN, 16));
+
         JPanel panelUser = new JPanel();
         panelUser.add(user);
         this.getContentPane().add(panelUser);
@@ -30,7 +32,7 @@ public class MainScreen extends JFrame {
         System.out.println("mainScreen load");
 //        User curUser = Application.getInstance().getCurrentUser();
 
-        JLabel title = new JLabel("Tickets Manage System");
+        JLabel title = new JLabel("Event Ticketing System");
 //        JLabel user = new JLabel(curUser.getUsername());
         title.setFont(new Font("Sans Serif", Font.BOLD, 24));
         JPanel panelTitle = new JPanel();

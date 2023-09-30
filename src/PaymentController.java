@@ -106,48 +106,31 @@ public class PaymentController implements ActionListener {
 //    }
 
     private void addProduct() {
-//        int orderID = Application.getInstance().getDataAdapter().loadLastOrderID();
-//        if (orderID == -1){
-//            order.setOrderID(0);
-//        }
-//        else{
-//            order.setOrderID(orderID + 1);
-//        }
-//        String id = JOptionPane.showInputDialog("Enter ProductID: ");
-//        Ticket ticket = Application.getInstance().getDataAdapter().loadProduct(Integer.parseInt(id));
-//        if (ticket == null) {
-//            JOptionPane.showMessageDialog(null, "This product does not exist!");
-//            return;
-//        }
+        // Get all events from the database
+        List<Event> events = Application.getInstance().getDataAdapter().loadAllEvents();
 
-//        double quantity = Double.parseDouble(JOptionPane.showInputDialog(null,"Enter quantity: "));
-//
-//        if (quantity < 0 || quantity > ticket.getQuantity()) {
-//            JOptionPane.showMessageDialog(null, "This quantity is not valid!");
-//            return;
-//        }
+        EventView eventView = new EventView(events);
+        eventView.getSelectButton().addActionListener(e -> {
+            Event selectedEvent = eventView.getSelectedEvent();
 
-//        OrderLine line = new OrderLine();
-//        line.setOrderID(this.order.getOrderID());
-//        line.setProductID(ticket.getProductID());
-//        line.setQuantity(quantity);
-//        line.setCost(quantity * ticket.getPrice());
-//        order.getLines().add(line);
-//        order.setTotalCost(order.getTotalCost() + line.getCost());
+            // Get tickets based on the selected event
+            List<Ticket> tickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(selectedEvent.getId());
 
+            Ticketing ticketView = new Ticketing(tickets);
+            ticketView.getSelectButton().addActionListener(te -> {
+                Ticket selectedTicket = ticketView.getSelectedTicket();
+                // Add the selected ticket to the shopping cart
+                // TODO: Implement this functionality
 
+                ticketView.dispose();
+            });
+            ticketView.setVisible(true);
 
-//        Object[] row = new Object[5];
-//        row[0] = line.getProductID();
-//        row[1] = ticket.getName();
-//        row[2] = ticket.getPrice();
-//        row[3] = line.getQuantity();
-//        row[4] = line.getCost();
-
-//        this.view.addRow(row);
-//        this.view.getLabTotal().setText("Total: $" + order.getTotalCost());
-//        this.view.invalidate();
+            eventView.dispose();
+        });
+        eventView.setVisible(true);
     }
+
 
     public static class PaymentView extends JFrame {
 
@@ -163,7 +146,7 @@ public class PaymentController implements ActionListener {
 
         public PaymentView() {
 
-            this.setTitle("Order View");
+            this.setTitle("Tickets Shopping Cart");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
             this.setSize(400, 600);
             

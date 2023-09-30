@@ -1,8 +1,10 @@
 public class Event {
     private int eventID;
     private String eventName;
-
+    
+    private String eventDate;
     private String eventLocation;
+    private String eventDescription;
 
     public String getEventName() {
         return eventName;
@@ -26,5 +28,17 @@ public class Event {
 
     public void setEventID(int eventID) {
         this.eventID = eventID;
+    }
+
+    public int getId() {
+        return eventID;
+    }
+
+    public String getEventDate() {
+        return eventDate;
+    }
+
+    public String getEventDescription() {
+        return eventDescription;
     }
 }
