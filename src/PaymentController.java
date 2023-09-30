@@ -120,7 +120,12 @@ public class PaymentController implements ActionListener {
             ticketView.getSelectButton().addActionListener(te -> {
                 Ticket selectedTicket = ticketView.getSelectedTicket();
                 // Add the selected ticket to the shopping cart
-                // TODO: Implement this functionality
+                view.addRow(new Object[]{
+                        selectedTicket.getTicketID(),
+                        selectedEvent.getEventName(),  // Assuming you can access the event's name from the selectedEvent object
+                        selectedTicket.getTicketType(),
+                        selectedTicket.getPrice()
+                });
 
                 ticketView.dispose();
             });
@@ -149,10 +154,12 @@ public class PaymentController implements ActionListener {
             this.setTitle("Tickets Shopping Cart");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
             this.setSize(400, 600);
-            
+
             items.addColumn("Ticket ID");
             items.addColumn("Event Name");
+            items.addColumn("Ticket Type");
             items.addColumn("Price");
+
 
             JPanel panelOrder = new JPanel();
             panelOrder.setPreferredSize(new Dimension(400, 450));
