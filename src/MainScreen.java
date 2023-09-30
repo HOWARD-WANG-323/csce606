@@ -30,7 +30,7 @@ public class MainScreen extends JFrame {
         System.out.println("mainScreen load");
 //        User curUser = Application.getInstance().getCurrentUser();
 
-        JLabel title = new JLabel("Store Management System");
+        JLabel title = new JLabel("Tickets Manage System");
 //        JLabel user = new JLabel(curUser.getUsername());
         title.setFont(new Font("Sans Serif", Font.BOLD, 24));
         JPanel panelTitle = new JPanel();

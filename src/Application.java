@@ -81,7 +81,6 @@ public class Application {
         return cardController;
     }
 
-
     private OrderController orderController;
 
     public OrderController getOrderController() {
@@ -91,7 +90,6 @@ public class Application {
     public DataAdapter getDataAdapter() {
         return dataAdapter;
     }
-
 
     private Application() {
         // create SQLite database connection here!
