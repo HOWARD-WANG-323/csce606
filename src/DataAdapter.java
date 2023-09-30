@@ -214,7 +214,40 @@ public class DataAdapter {
         return events;
     }
     public List<Ticket> loadTicketsByEventId(int eventId) {
-        //todo: implement this method
-        return null;
+        List<Ticket> tickets = new ArrayList<>();
+
+        try {
+            String query = "SELECT t.TicketID, t.EventID, e.EventName, t.TicketType, t.SeatNumber, t.Price " +
+                    "FROM Tickets t " +
+                    "JOIN Events e ON t.EventID = e.EventID " +
+                    "WHERE t.EventID = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, eventId);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            while(resultSet.next()) {
+                Ticket ticket = new Ticket();
+
+                ticket.setTicketID(resultSet.getInt("TicketID"));
+                ticket.setEventID(resultSet.getInt("EventID"));
+                ticket.setEventName(resultSet.getString("EventName"));
+                ticket.setTicketType(resultSet.getString("TicketType"));
+                ticket.setSeatNumber(resultSet.getString("SeatNumber"));
+                ticket.setPrice(resultSet.getDouble("Price"));
+
+                tickets.add(ticket);
+            }
+
+            resultSet.close();
+            statement.close();
+
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+
+        return tickets;
     }
+
 }

@@ -31,6 +31,4 @@ public class EventView extends JFrame {
         return eventList.getSelectedValue();
     }
 
-    // The custom renderer code here...
-    
 }
