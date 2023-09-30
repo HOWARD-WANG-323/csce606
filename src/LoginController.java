@@ -34,7 +34,7 @@ public class LoginController implements ActionListener {
 
     public static class LoginScreen extends JFrame {
         private JTextField txtUserName = new JTextField(10);
-        private JTextField txtPassword = new JTextField(10);
+        JPasswordField txtPassword = new JPasswordField(10);
         private JButton    btnLogin    = new JButton("Login");
 
         public JButton getBtnLogin() {

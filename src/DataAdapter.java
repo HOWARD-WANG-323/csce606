@@ -46,7 +46,9 @@ public class DataAdapter {
                 Card card = new Card();
                 card.setCardID(resultSet.getInt(1));
                 card.setUserID(resultSet.getInt(2));
-                card.setCard(resultSet.getString(3));
+                card.setCardNumber(resultSet.getString(3));
+                card.setCardHolderName(resultSet.getString(4));
+                card.setExpirationDate(resultSet.getString(5));
                 resultSet.close();
                 statement.close();
                 return card;
@@ -94,35 +96,53 @@ public class DataAdapter {
     }
 
     public boolean saveCard(Card card) {
+        String checkIfExistsQuery = "SELECT * FROM Cards WHERE CardNumber = ?"; // Use CardNumber for checking existence
+        String updateQuery = "UPDATE Cards SET UserID = ?, CardNumber = ?, CardHolder = ?, ExpDate = ? WHERE CardID = ?";
+        String insertQuery = "INSERT INTO Cards (UserID, CardNumber, CardHolder, ExpDate) VALUES (?, ?, ?, ?)"; // Removed CardID
+
         try {
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Cards WHERE CardID = ?");
-            statement.setInt(1, card.getCardID());
+            // Check if card exists using CardNumber
+            try (PreparedStatement checkIfExistsStmt = connection.prepareStatement(checkIfExistsQuery)) {
+                checkIfExistsStmt.setString(1, card.getCardNumber());
 
-            ResultSet resultSet = statement.executeQuery();
+                try (ResultSet resultSet = checkIfExistsStmt.executeQuery()) {
+                    if (resultSet.next()) { // this card exists, update its fields
+                        try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
+                            updateStmt.setInt(1, card.getUserID());
+                            updateStmt.setString(2, card.getCardNumber());
+                            updateStmt.setString(3, card.getCardHolderName());
+                            updateStmt.setString(4, card.getExpiryDate());
+                            updateStmt.setInt(5, resultSet.getInt("CardID")); // get the CardID from the resultSet
 
-            if (resultSet.next()) { // this address exists, update its fields
-                statement = connection.prepareStatement("UPDATE Cards SET UserID = ?, CardNum = ? WHERE CardID = ?");
-                statement.setInt(1, card.getUserID());
-                statement.setString(2, card.getCard());
-                statement.setInt(3, card.getCardID());
+                            updateStmt.executeUpdate();
+                        }
+                    } else { // this card does not exist, use insert into
+                        try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                            insertStmt.setInt(1, card.getUserID());
+                            insertStmt.setString(2, card.getCardNumber());
+                            insertStmt.setString(3, card.getCardHolderName());
+                            insertStmt.setString(4, card.getExpiryDate());
+
+                            insertStmt.executeUpdate();
+
+                            // Get the generated CardID and set to card object
+                            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    card.setCardID(generatedKeys.getInt(1));
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            else { // this address does not exist, use insert into
-                statement = connection.prepareStatement("INSERT INTO Cards VALUES (?, ?, ?)");
-                statement.setInt(2, card.getUserID());
-                statement.setString(3, card.getCard());
-                statement.setInt(1, card.getCardID());
-            }
-            statement.execute();
-            resultSet.close();
-            statement.close();
-            return true;        // save successfully
-
+            return true; // save successfully
         } catch (SQLException e) {
-            System.out.println("Database access error!");
+            System.out.println("Database access error while saving card!");
             e.printStackTrace();
             return false; // cannot save!
         }
     }
+
 
     public boolean saveReceipt(Receipt receipt) {
         try {
@@ -252,4 +272,38 @@ public class DataAdapter {
         return tickets;
     }
 
+    public List<Card> loadCardsByUserID(int userID) {
+        //load cards from database by userID
+        List<Card> cards = new ArrayList<>();
+        try {
+            String query = "SELECT * FROM Cards WHERE UserID = " + userID;
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while(resultSet.next()) {
+                Card card = new Card();
+                card.setCardID(resultSet.getInt(1));
+                card.setUserID(resultSet.getInt(2));
+                card.setCardNumber(resultSet.getString(3));
+                card.setCardHolderName(resultSet.getString(4));
+                card.setExpirationDate(resultSet.getString(5));
+                cards.add(card);
+            }
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return cards;
+    }
+
+    public void deleteCard(Card selectedCard) {
+        try {
+            String query = "DELETE FROM Cards WHERE CardID = " + selectedCard.getCardID();
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(query);
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+    }
 }

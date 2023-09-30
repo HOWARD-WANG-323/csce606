@@ -8,7 +8,9 @@ import java.util.Date;
 public class MainScreen extends JFrame {
 
     private JButton btnBuy = new JButton("Buy Ticket");
-    private JButton btnFind = new JButton("Find Ticket");
+    private JButton btnFind = new JButton("My Tickets");
+
+
     public void logined(){
         User curUser = Application.getInstance().getCurrentUser();
         JLabel user = new JLabel("Current User: " + curUser.getUsername());

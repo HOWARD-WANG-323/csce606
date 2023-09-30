@@ -131,4 +131,8 @@ public class Application {
     public static void main(String[] args) {
         Application.getInstance().getLoginScreen().setVisible(true);
     }
+
+    public PaymentController getPayController() {
+        return paymentController;
+    }
 }

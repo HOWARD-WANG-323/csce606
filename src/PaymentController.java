@@ -139,6 +139,8 @@ public class PaymentController implements ActionListener {
     }
 
 
+
+
     public static class PaymentView extends JFrame {
 
         private JButton btnSetTicket = new JButton("Choose a Ticket");
@@ -155,6 +157,7 @@ public class PaymentController implements ActionListener {
         private JTable tblItems = new JTable(items);
         private JLabel labTotal = new JLabel("Total: ");
 
+        private JLabel labCardInfo = new JLabel("No card selected.");
         public PaymentView() {
 
             this.setTitle("Tickets Shopping Cart");
@@ -177,6 +180,14 @@ public class PaymentController implements ActionListener {
             tblItems.setFillsViewportHeight(true);
             this.getContentPane().add(panelOrder);
 
+
+            //credit card info
+            JPanel panelCardInfo = new JPanel();
+            panelCardInfo.setPreferredSize(new Dimension(400, 50));
+            panelCardInfo.add(labCardInfo);
+            this.getContentPane().add(panelCardInfo);
+
+
             JPanel panelButton = new JPanel();
             panelButton.setPreferredSize(new Dimension(400, 100));
             panelButton.add(btnSetTicket);
@@ -186,6 +197,18 @@ public class PaymentController implements ActionListener {
             this.getContentPane().add(panelButton);
 
         }
+
+        public void updateCurrentCardLabel(Card card) {
+            if (card != null) {
+                labCardInfo.setText("Card Holder: " + card.getCardHolderName() + ", Card Number: ****" + card.getCardNumber().substring(card.getCardNumber().length() - 4));
+                labCardInfo.setVisible(true);
+            } else {
+                labCardInfo.setVisible(false);
+            }
+            this.revalidate();  // refresh the layout
+            this.repaint();
+        }
+
 
         public JButton getBtnAdd() {
             return btnSetTicket;
@@ -207,5 +230,8 @@ public class PaymentController implements ActionListener {
             items.addRow(row);
         }
 
+        public JLabel getLabCardInfo() {
+            return labCardInfo;
+        }
     }
 }
