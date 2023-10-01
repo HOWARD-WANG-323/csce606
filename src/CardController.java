@@ -46,7 +46,7 @@ public class CardController implements ActionListener {
                     cardView.getCardHolderName().setText(selectedCard.getCardHolderName());
                     cardView.getExpirationDate().setText(selectedCard.getExpiryDate());
 
-                    // 关闭JOptionPane窗口
+                    // Close the dialog
                     Window window = SwingUtilities.getWindowAncestor(selectButton);
                     if (window != null) {
                         window.dispose();
@@ -111,56 +111,7 @@ public class CardController implements ActionListener {
         JOptionPane.showMessageDialog(null, "Card Applied!");
     }
 
-    private void saveCard() {
-        Card card = new Card();
 
-        card.setCardNumber(cardView.getCardNumber().getText().trim());
-        card.setCardHolderName(cardView.getCardHolderName().getText().trim());
-        card.setExpirationDate(cardView.getExpirationDate().getText().trim());
-        if (isCreditCardValid(card)) {
-            return;  // Exit the method if card is not valid
-        }
-
-        card.setUserID(Application.getInstance().getCurrentUser().getUserID());
-        System.out.println(card.getUserID());
-        Application.getInstance().getDataAdapter().saveCard(card);
-    }
-    private void loadCard() {
-        try {
-            int userID = Application.getInstance().getCurrentUser().getUserID();
-            System.out.println(userID);
-            List<Card> cards = Application.getInstance().getDataAdapter().loadCardsByUserID(userID);
-
-            // Create a list of cards to display in the JList
-            JList<Card> cardList = new JList<>(cards.toArray(new Card[0]));
-            cardList.setCellRenderer(new CardCellRenderer());  // Use custom cell renderer
-            JScrollPane scrollPane = new JScrollPane(cardList);
-
-            scrollPane.setPreferredSize(new Dimension(250, 150)); // Width, height
-
-            int result = JOptionPane.showConfirmDialog(
-                    null,
-                    scrollPane,
-                    "Select Card",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (result == JOptionPane.OK_OPTION) {
-                Card selectedCard = cardList.getSelectedValue();
-                if (selectedCard != null) {
-                    cardView.getCardNumber().setText(selectedCard.getCardNumber());
-                    cardView.getCardHolderName().setText(selectedCard.getCardHolderName());
-                    cardView.getExpirationDate().setText(selectedCard.getExpiryDate());
-                    Application.getInstance().getPayController().setCurrentCard(selectedCard);
-                }
-            } else {
-                throw new Exception("Card selection was cancelled by the user.");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
-        }
-    }
 
     private boolean isCreditCardValid(Card card) {
         try {

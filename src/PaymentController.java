@@ -3,8 +3,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PaymentController implements ActionListener {
@@ -13,7 +12,7 @@ public class PaymentController implements ActionListener {
 
     private Address currentAddress = null;
     private Card currentCard = null;
-
+    private List<Ticket> addedTickets = new ArrayList<>();
     public Address getCurrentAddress() {
         System.out.println("get current");
         return currentAddress;
@@ -31,6 +30,7 @@ public class PaymentController implements ActionListener {
         view.getBtnPay().addActionListener(this);
         view.getBtnSetAddress().addActionListener(this);
         view.getBtnSetCard().addActionListener(this);
+        view.getBtnDeleteSelected().addActionListener(this);
 
         receipt = new Receipt();
     }
@@ -38,14 +38,27 @@ public class PaymentController implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == view.getBtnAdd())
-            addProduct();
-        else
-        if (e.getSource() == view.getBtnPay()){}
+            addTicket();
+        else if (e.getSource() == view.getBtnPay()){}
 //            makeOrder();
         else if (e.getSource() == view.getBtnSetCard()) {
             setCard();
         } else if (e.getSource() == view.getBtnSetAddress()) {
             setAddress();
+        }else if (e.getSource() == view.getBtnDeleteSelected()) {
+            deleteSelected();
+        }
+    }
+
+    private void deleteSelected(){
+        int selectedRow = view.getTblItems().getSelectedRow();
+        if (selectedRow >= 0) {
+            // remove the selected row from the table model
+            view.items.removeRow(selectedRow);// remove the selected ticket from the list of added tickets
+            addedTickets.remove(selectedRow);
+            // refresh the layout
+            view.revalidate();
+            view.repaint();
         }
     }
 
@@ -57,55 +70,11 @@ public class PaymentController implements ActionListener {
     private void setAddress(){
         Application.getInstance().getAddressView().setVisible(true);
     }
+    {
+        //todo: set address
+    }
 
-//    private void makeOrder() {
-//        if (currentAddress == null){
-//            JOptionPane.showMessageDialog(null, "Please aet your shipping address first!");
-//            return;
-//        }
-//        if (currentCard == null){
-//            JOptionPane.showMessageDialog(null, "Please aet your paying card first!");
-//            return;
-//        }
-//        SimpleDateFormat sdf =   new SimpleDateFormat( " yyyy-MM-dd HH:mm:ss " );
-//        order.setDate(sdf.format(new Date()));
-//
-//        List<OrderLine> lines = order.getLines();
-//        if (lines.isEmpty()){
-//            JOptionPane.showMessageDialog(null, "The order is empty!");
-//            return;
-//        }
-//        String receiptContent = "";
-//        receiptContent = receiptContent + "OrderID: " + order.getOrderID() + '\n';
-//        receiptContent = receiptContent + "Customer ID: " + Integer.toString(Application.getInstance().getCurrentUser().getUserID()) + '\n';
-//        receiptContent = receiptContent + "Customer Name: " + Application.getInstance().getCurrentUser().getUsername() + '\n';
-//        receiptContent = receiptContent + "Order's Date Time: " + order.getDate() + '\n';
-//        receiptContent = receiptContent + "Total Cost: " + order.getTotalCost() + '\n';
-////        for(OrderLine line: lines){
-//////            System.out.println(line.getProductID());
-////            int id = line.getProductID();
-////            Ticket ticket = Application.getInstance().getDataAdapter().loadProduct(id);
-////            double quantity = line.getQuantity();
-////            ticket.setQuantity(ticket.getQuantity() - quantity); // update new quantity!!
-////            Application.getInstance().getDataAdapter().saveProduct(ticket);
-////            receiptContent = receiptContent + '\t' + ticket.getName() + '\t' + "cost: " + ticket.getPrice() + " quantity: " + quantity + '\n';
-////        }
-//
-//
-//        Application.getInstance().getDataAdapter().saveOrder(order);
-//
-//        receiptContent = receiptContent + "Total Tax: " + order.getTotalTax() + '\n';
-//        receiptContent = receiptContent + "Shipping Address: " + currentAddress.getAddress() + '\n';
-//        String card = currentCard.getCard();
-//        receiptContent = receiptContent + "Paying Card: " + "****" + card.substring(card.length() - 4);
-//        receipt.setContent(receiptContent);
-//        receipt.setUserID(Application.getInstance().getCurrentUser().getUserID());
-//        receipt.setOrderID(order.getOrderID());
-//        System.out.println(receiptContent);
-//        Application.getInstance().getDataAdapter().saveReceipt(receipt);
-//    }
-
-    private void addProduct() {
+    private void addTicket() {
         // Get all events from the database
         List<Event> events = Application.getInstance().getDataAdapter().loadAllEvents();
 
@@ -115,6 +84,7 @@ public class PaymentController implements ActionListener {
 
             // Get tickets based on the selected event
             List<Ticket> tickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(selectedEvent.getId());
+            tickets.removeAll(addedTickets);  // remove already added tickets from the list
 
             Ticketing ticketView = new Ticketing(tickets);
             ticketView.getSelectButton().addActionListener(te -> {
@@ -128,14 +98,20 @@ public class PaymentController implements ActionListener {
                         selectedEvent.getEventDate(),
                         selectedTicket.getPrice()
                 });
-
+                addedTickets.add(selectedTicket);  // add to the list of added tickets
+                tickets.remove(selectedTicket);// remove from the available tickets list
+                ticketView.revalidate();
+                ticketView.repaint();
                 ticketView.dispose();
             });
             ticketView.setVisible(true);
-
+            eventView.revalidate();
+            eventView.repaint();
             eventView.dispose();
         });
         eventView.setVisible(true);
+
+
     }
 
 
@@ -147,6 +123,8 @@ public class PaymentController implements ActionListener {
         private JButton btnSetAddress = new JButton("Set Address");
         private JButton btnSetCard = new JButton("Set Card");
         private JButton btnPay = new JButton("Make a payment");
+
+        private JButton btnDeleteSelected = new JButton("Delete Selected");
 
         private DefaultTableModel items = new DefaultTableModel() {
             @Override
@@ -174,6 +152,8 @@ public class PaymentController implements ActionListener {
             panelOrder.setPreferredSize(new Dimension(400, 450));
             panelOrder.setLayout(new BoxLayout(panelOrder, BoxLayout.PAGE_AXIS));
             tblItems.setBounds(0, 0, 400, 350);
+            tblItems.getTableHeader().setReorderingAllowed(false);
+
             panelOrder.add(tblItems.getTableHeader());
             panelOrder.add(tblItems);
             panelOrder.add(labTotal);
@@ -191,9 +171,12 @@ public class PaymentController implements ActionListener {
             JPanel panelButton = new JPanel();
             panelButton.setPreferredSize(new Dimension(400, 100));
             panelButton.add(btnSetTicket);
+            panelButton.add(btnDeleteSelected);
+
             panelButton.add(btnPay);
             panelButton.add(btnSetAddress);
             panelButton.add(btnSetCard);
+
             this.getContentPane().add(panelButton);
 
         }
@@ -233,5 +216,14 @@ public class PaymentController implements ActionListener {
         public JLabel getLabCardInfo() {
             return labCardInfo;
         }
+
+        public JButton getBtnDeleteSelected() {
+            return btnDeleteSelected;
+        }
+
+        public JTable getTblItems() {
+            return tblItems;
+        }
+
     }
 }
