@@ -42,8 +42,7 @@ public class Ticketing extends JFrame {
 
         returnButton.addActionListener(e -> {
             this.dispose();  // Close the Ticketing window
-            // Here, you should open the Event selection window.
-            // Assuming you have a method called `openEventSelectionWindow` in your main application class.
+
             Application.getInstance().getShopCartController().reopenEventList();
         });
 

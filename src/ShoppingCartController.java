@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShoppingCartController implements ActionListener {
-    private PaymentView view;
+    private ShopCartView view;
     private Receipt receipt = null;
 
     private Address currentAddress = null;
@@ -23,7 +23,7 @@ public class ShoppingCartController implements ActionListener {
         this.currentAddress = address;
     }
     public void setCurrentCard(Card card) {this.currentCard = card;}
-    public ShoppingCartController(PaymentView view) {
+    public ShoppingCartController(ShopCartView view) {
         this.view = view;
 
         view.getBtnAdd().addActionListener(this);
@@ -118,7 +118,7 @@ public class ShoppingCartController implements ActionListener {
        addTicket();
    }
 
-    public static class PaymentView extends JFrame {
+    public static class ShopCartView extends JFrame {
 
         private JButton btnSetTicket = new JButton("Choose a Ticket");
         private JButton btnSetAddress = new JButton("Set Address");
@@ -137,7 +137,8 @@ public class ShoppingCartController implements ActionListener {
         private JLabel labTotal = new JLabel("Total: ");
 
         private JLabel labCardInfo = new JLabel("No card selected.");
-        public PaymentView() {
+        private JLabel labAddressInfo = new JLabel("No address selected.");
+        public ShopCartView() {
 
             this.setTitle("Tickets Shopping Cart");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
@@ -166,6 +167,7 @@ public class ShoppingCartController implements ActionListener {
             JPanel panelCardInfo = new JPanel();
             panelCardInfo.setPreferredSize(new Dimension(400, 50));
             panelCardInfo.add(labCardInfo);
+            panelCardInfo.add(labAddressInfo);
             this.getContentPane().add(panelCardInfo);
 
 
@@ -226,5 +228,15 @@ public class ShoppingCartController implements ActionListener {
             return tblItems;
         }
 
+        public void updateCurrentAddressLabel(Address address) {
+            if (address != null) {
+                labAddressInfo.setText("Address: " + address.getStreet() + ", " + address.getCity() + ", " + address.getState() + ", " + address.getPostalCode());
+                labAddressInfo.setVisible(true);
+            } else {
+                labAddressInfo.setVisible(false);
+            }
+            this.revalidate();  // refresh the layout
+            this.repaint();
+        }
     }
 }

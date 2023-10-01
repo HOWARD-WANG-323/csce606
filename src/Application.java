@@ -1,5 +1,4 @@
 import java.sql.*;
-import java.util.List;
 
 public class Application {
 
@@ -33,7 +32,7 @@ public class Application {
 
     private TicketController.TicketView ticketView = new TicketController.TicketView();
 
-    private ShoppingCartController.PaymentView paymentView = new ShoppingCartController.PaymentView();
+    private ShoppingCartController.ShopCartView shopCartView = new ShoppingCartController.ShopCartView();
 
 
     private MainScreen mainScreen = new MainScreen();
@@ -55,8 +54,8 @@ public class Application {
         return ticketView;
     }
 
-    public ShoppingCartController.PaymentView getPaymentView() {
-        return paymentView;
+    public ShoppingCartController.ShopCartView getPaymentView() {
+        return shopCartView;
     }
 
 
@@ -119,7 +118,7 @@ public class Application {
 
         ticketController = new TicketController(ticketView);
 
-        shoppingCartController = new ShoppingCartController(paymentView);
+        shoppingCartController = new ShoppingCartController(shopCartView);
 
         addressController = new AddressController(addressView);
 
