@@ -8,7 +8,7 @@ import java.util.Date;
 public class MainScreen extends JFrame {
 
     private JButton btnBuy = new JButton("Buy Ticket");
-    private JButton btnFind = new JButton("My Tickets");
+    private JButton btnFind = new JButton("Manage Tickets");
 
 
     public void logined(){

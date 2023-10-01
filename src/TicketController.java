@@ -20,20 +20,20 @@ public class TicketController implements ActionListener {
     }
 
     private void saveTicket() {
-
+        //todo: save ticket to database
     }
 
     private void loadTicket() {
-
+        //todo: load ticket from database
     }
 
 
-    public static class TicketView extends JFrame{
-        private JTextField txtTicketID  = new JTextField(10);
-        private JTextField txtTicketName  = new JTextField(30);
-        private JTextField txtTicketPrice  = new JTextField(10);
-        private JTextField txtTicketQuantity  = new JTextField(10);
-
+    public static class TicketView extends JFrame {
+        private JTextField txtTicketID = new JTextField(10);
+        private JTextField txtEventID = new JTextField(10);
+        private JComboBox<String> cmbTicketStatus = new JComboBox<>(new String[]{"AVAILABLE", "SOLD", "USED"});
+        private JTextField txtTicketPrice = new JTextField(10);
+        private JTextField txtTicketType = new JTextField(10);
 
         private JButton btnLoad = new JButton("Load Ticket");
         private JButton btnSave = new JButton("Save Ticket");
@@ -41,7 +41,7 @@ public class TicketController implements ActionListener {
         public TicketView() {
             this.setTitle("Manage Tickets");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
-            this.setSize(500, 200);
+            this.setSize(600, 300);
 
             JPanel panelButton = new JPanel();
             panelButton.add(btnLoad);
@@ -54,18 +54,26 @@ public class TicketController implements ActionListener {
             txtTicketID.setHorizontalAlignment(JTextField.RIGHT);
             this.getContentPane().add(panelTicketID);
 
-            JPanel panelTicketName = new JPanel();
-            panelTicketName.add(new JLabel("Event Name: "));
-            panelTicketName.add(txtTicketName);
-            this.getContentPane().add(panelTicketName);
+            JPanel panelEventID = new JPanel();
+            panelEventID.add(new JLabel("Event ID: "));
+            panelEventID.add(txtEventID);
+            this.getContentPane().add(panelEventID);
 
-            JPanel panelTicketInfo = new JPanel();
-            panelTicketInfo.add(new JLabel("Price: "));
-            panelTicketInfo.add(txtTicketPrice);
+            JPanel panelTicketStatus = new JPanel();
+            panelTicketStatus.add(new JLabel("Ticket Status: "));
+            panelTicketStatus.add(cmbTicketStatus);
+            this.getContentPane().add(panelTicketStatus);
+
+            JPanel panelTicketPrice = new JPanel();
+            panelTicketPrice.add(new JLabel("Price: "));
+            panelTicketPrice.add(txtTicketPrice);
             txtTicketPrice.setHorizontalAlignment(JTextField.RIGHT);
+            this.getContentPane().add(panelTicketPrice);
 
-            this.getContentPane().add(panelTicketInfo);
-
+            JPanel panelTicketType = new JPanel();
+            panelTicketType.add(new JLabel("Ticket Type: "));
+            panelTicketType.add(txtTicketType);
+            this.getContentPane().add(panelTicketType);
         }
 
         public JButton getBtnLoad() {
@@ -80,13 +88,20 @@ public class TicketController implements ActionListener {
             return txtTicketID;
         }
 
-        public JTextField getTxtTicketName() {
-            return txtTicketName;
+        public JTextField getTxtEventID() {
+            return txtEventID;
+        }
+
+        public JComboBox<String> getCmbTicketStatus() {
+            return cmbTicketStatus;
         }
 
         public JTextField getTxtTicketPrice() {
             return txtTicketPrice;
         }
-        
+
+        public JTextField getTxtTicketType() {
+            return txtTicketType;
+        }
     }
 }
