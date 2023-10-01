@@ -103,7 +103,7 @@ public class CardController implements ActionListener {
 
         card.setUserID(Application.getInstance().getCurrentUser().getUserID());
         Application.getInstance().getDataAdapter().saveCard(card);
-        Application.getInstance().getPaymentController().setCurrentCard(card);
+        Application.getInstance().getShopCartController().setCurrentCard(card);
         cardView.setVisible(false);
         //message box
         Application.getInstance().getPayController().setCurrentCard(card);

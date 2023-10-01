@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PaymentController implements ActionListener {
+public class ShoppingCartController implements ActionListener {
     private PaymentView view;
     private Receipt receipt = null;
 
@@ -23,7 +23,7 @@ public class PaymentController implements ActionListener {
         this.currentAddress = address;
     }
     public void setCurrentCard(Card card) {this.currentCard = card;}
-    public PaymentController(PaymentView view) {
+    public ShoppingCartController(PaymentView view) {
         this.view = view;
 
         view.getBtnAdd().addActionListener(this);
@@ -114,8 +114,9 @@ public class PaymentController implements ActionListener {
 
     }
 
-
-
+   public void reopenEventList(){
+       addTicket();
+   }
 
     public static class PaymentView extends JFrame {
 

@@ -34,6 +34,7 @@ public class TicketController implements ActionListener {
         private JTextField txtTicketPrice  = new JTextField(10);
         private JTextField txtTicketQuantity  = new JTextField(10);
 
+
         private JButton btnLoad = new JButton("Load Ticket");
         private JButton btnSave = new JButton("Save Ticket");
 

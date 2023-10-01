@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Ticket {
     private int ticketID;
     private int eventID;
@@ -67,4 +69,19 @@ public class Ticket {
     public String toString() {
         return eventName + " - " + ticketType + " - $" + price;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Ticket ticket = (Ticket) obj;
+        return ticketID == ticket.ticketID;  // assuming 'id' is the unique identifier for a ticket
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ticketID);
+    }
+
+
 }

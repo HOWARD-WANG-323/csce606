@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.util.List;
 
 public class Application {
 
@@ -32,7 +33,7 @@ public class Application {
 
     private TicketController.TicketView ticketView = new TicketController.TicketView();
 
-    private PaymentController.PaymentView paymentView = new PaymentController.PaymentView();
+    private ShoppingCartController.PaymentView paymentView = new ShoppingCartController.PaymentView();
 
 
     private MainScreen mainScreen = new MainScreen();
@@ -54,7 +55,7 @@ public class Application {
         return ticketView;
     }
 
-    public PaymentController.PaymentView getPaymentView() {
+    public ShoppingCartController.PaymentView getPaymentView() {
         return paymentView;
     }
 
@@ -68,7 +69,7 @@ public class Application {
     public LoginController loginController;
 
     private TicketController ticketController;
-    private PaymentController paymentController;
+    private ShoppingCartController shoppingCartController;
 
     private AddressController addressController;
 
@@ -78,8 +79,8 @@ public class Application {
         return ticketController;
     }
 
-    public PaymentController getPaymentController() {
-        return paymentController;
+    public ShoppingCartController getShopCartController() {
+        return shoppingCartController;
     }
     public AddressController getAddressController() {
         return addressController;
@@ -118,7 +119,7 @@ public class Application {
 
         ticketController = new TicketController(ticketView);
 
-        paymentController = new PaymentController(paymentView);
+        shoppingCartController = new ShoppingCartController(paymentView);
 
         addressController = new AddressController(addressView);
 
@@ -132,7 +133,9 @@ public class Application {
         Application.getInstance().getLoginScreen().setVisible(true);
     }
 
-    public PaymentController getPayController() {
-        return paymentController;
+    public ShoppingCartController getPayController() {
+        return shoppingCartController;
     }
+
+
 }
