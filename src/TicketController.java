@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class TicketController implements ActionListener {
     private TicketView ticketView;
@@ -20,11 +21,38 @@ public class TicketController implements ActionListener {
     }
 
     private void saveTicket() {
-        //todo: save ticket to database
+        // save ticket info into database
+        Ticket ticket = new Ticket();
+        ticket.setTicketID(Integer.parseInt(ticketView.getTxtTicketID().getText()));
+        ticket.setEventID(Integer.parseInt(ticketView.getTxtEventID().getText()));
+        ticket.setTicketStatus(ticketView.getCmbTicketStatus().getSelectedItem().toString());
+        ticket.setPrice(Double.parseDouble(ticketView.getTxtTicketPrice().getText()));
+        ticket.setTicketType(ticketView.getTxtTicketType().getText());
+
+        DataAdapter dataAdapter = Application.getInstance().getDataAdapter();
+        if (dataAdapter.saveTicket(ticket)) {
+            List<Ticket> updatedTickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(ticket.getEventID());
+            Application.getInstance().getTicketing().refreshTicketList(updatedTickets);
+            JOptionPane.showMessageDialog(null, "Ticket is saved successfully!");
+        }
+        else
+            JOptionPane.showMessageDialog(null, "Ticket is NOT saved successfully!");
     }
 
     private void loadTicket() {
-        //todo: load ticket from database
+        // load ticket info from database
+        int ticketID = Integer.parseInt(ticketView.getTxtTicketID().getText());
+        Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(ticketID);
+        // display the ticket info in the text fields
+        if (ticket == null) {
+            JOptionPane.showMessageDialog(null, "This ticket does not exist!");
+        }
+        else {
+            ticketView.getTxtEventID().setText(String.valueOf(ticket.getEventID()));
+            ticketView.getCmbTicketStatus().setSelectedItem(ticket.getTicketStatus());
+            ticketView.getTxtTicketPrice().setText(String.valueOf(ticket.getPrice()));
+            ticketView.getTxtTicketType().setText(ticket.getTicketType());
+        }
     }
 
 
@@ -103,5 +131,7 @@ public class TicketController implements ActionListener {
         public JTextField getTxtTicketType() {
             return txtTicketType;
         }
+
+
     }
 }

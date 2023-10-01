@@ -74,6 +74,8 @@ public class Application {
 
     private CardController cardController;
 
+    private Ticketing ticketing;
+
     public TicketController getTicketController() {
         return ticketController;
     }
@@ -88,6 +90,13 @@ public class Application {
         return cardController;
     }
 
+    public Ticketing getTicketing() {
+        return ticketing;
+    }
+
+    public void setTicketing(Ticketing ticketing) {
+        this.ticketing = ticketing;
+    }
 
     public DataAdapter getDataAdapter() {
         return dataAdapter;

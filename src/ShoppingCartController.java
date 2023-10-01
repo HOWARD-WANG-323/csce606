@@ -97,6 +97,7 @@ public class ShoppingCartController implements ActionListener {
             tickets.removeAll(addedTickets);  // remove already added tickets from the list
 
             Ticketing ticketView = new Ticketing(tickets);
+            Application.getInstance().setTicketing(ticketView);
             ticketView.getSelectButton().addActionListener(te -> {
                 Ticket selectedTicket = ticketView.getSelectedTicket();
                 // Add the selected ticket to the shopping cart

@@ -201,7 +201,7 @@ public class DataAdapter {
         List<Ticket> tickets = new ArrayList<>();
 
         try {
-            String query = "SELECT t.TicketID, t.EventID, e.EventName, t.TicketType, t.SeatNumber, t.Price " +
+            String query = "SELECT t.TicketID, t.EventID, e.EventName, t.TicketType, t.SeatNumber, t.Price, t.TicketStatus " +
                     "FROM Tickets t " +
                     "JOIN Events e ON t.EventID = e.EventID " +
                     "WHERE t.EventID = ?";
@@ -219,6 +219,7 @@ public class DataAdapter {
                 ticket.setTicketType(resultSet.getString("TicketType"));
                 ticket.setSeatNumber(resultSet.getString("SeatNumber"));
                 ticket.setPrice(resultSet.getDouble("Price"));
+                ticket.setTicketStatus(resultSet.getString("TicketStatus")); // Setting the TicketStatus
 
                 tickets.add(ticket);
             }
@@ -405,5 +406,32 @@ public class DataAdapter {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public Ticket loadTicket(int ticketID) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tickets WHERE TicketID = ?");
+            statement.setInt(1, ticketID);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                Ticket ticket = new Ticket();
+                ticket.setTicketID(resultSet.getInt("TicketID"));
+                ticket.setEventID(resultSet.getInt("EventID"));
+                ticket.setUserID(resultSet.getInt("UserID"));
+                ticket.setTicketStatus(resultSet.getString("TicketStatus"));
+                ticket.setSeatNumber(resultSet.getString("SeatNumber"));
+                ticket.setPrice(resultSet.getDouble("Price"));
+                ticket.setTicketType(resultSet.getString("TicketType"));
+                resultSet.close();
+                statement.close();
+
+                return ticket;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return null;
     }
 }

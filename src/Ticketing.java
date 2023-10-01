@@ -18,8 +18,8 @@ public class Ticketing extends JFrame {
         boolean allTicketsSoldOut = true; // Assume all tickets are sold out until proven otherwise.
 
         for (Ticket ticket : tickets) {
-            ticketListModel.addElement(ticket);
-            if (!tickets.isEmpty()) {  // Assuming Ticket class has getQuantity method.
+            if ("AVAILABLE".equals(ticket.getTicketStatus())) {  // Check if the ticket status is "AVAILABLE".
+                ticketListModel.addElement(ticket);
                 allTicketsSoldOut = false;
             }
         }
@@ -55,5 +55,25 @@ public class Ticketing extends JFrame {
     public Ticket getSelectedTicket() {
         return ticketList.getSelectedValue();
     }
+    public void refreshTicketList(List<Ticket> tickets) {
+        ticketListModel.clear();
+        boolean allTicketsSoldOut = true;
+
+        for (Ticket ticket : tickets) {
+            if ("AVAILABLE".equals(ticket.getTicketStatus())) {
+                ticketListModel.addElement(ticket);
+                allTicketsSoldOut = false;
+            }
+        }
+
+        if (allTicketsSoldOut) {
+            lblTicketStatus.setText("Tickets for this event have been sold out.");
+            selectButton.setEnabled(false); // Disable the button if all tickets are sold out.
+        } else {
+            lblTicketStatus.setText("");
+            selectButton.setEnabled(true); // Enable the button if there are available tickets.
+        }
+    }
+
 
 }
