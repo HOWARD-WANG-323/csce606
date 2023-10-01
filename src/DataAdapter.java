@@ -67,21 +67,33 @@ public class DataAdapter {
                 checkStmt.setInt(1, address.getAddressID());
                 try (ResultSet resultSet = checkStmt.executeQuery()) {
                     if (resultSet.next()) { // this address exists, update its fields
-                        String updateQuery = "UPDATE Addresses SET UserID = ?, Address = ? WHERE AddressID = ?";
+                        String updateQuery = "UPDATE Addresses SET UserID = ?, Street = ?, City = ?, State = ?, Zip = ? WHERE AddressID = ?";
                         try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
                             updateStmt.setInt(1, address.getUserID());
-                            updateStmt.setString(2, address.getAddress());
-                            updateStmt.setInt(3, address.getAddressID());
+                            updateStmt.setString(2, address.getStreet());
+                            updateStmt.setString(3, address.getCity());
+                            updateStmt.setString(4, address.getState());
+                            updateStmt.setString(5, address.getPostalCode());
+                            updateStmt.setInt(6, address.getAddressID());
                             updateStmt.executeUpdate();
                             isSaved = true;
                         }
                     } else { // this address does not exist, use insert into
-                        String insertQuery = "INSERT INTO Addresses VALUES (?, ?, ?)";
-                        try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
-                            insertStmt.setInt(1, address.getAddressID());
-                            insertStmt.setInt(2, address.getUserID());
-                            insertStmt.setString(3, address.getAddress());
+                        String insertQuery = "INSERT INTO Addresses (UserID, Street, City, State, Zip) VALUES (?, ?, ?, ?, ?)";
+                        try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                            insertStmt.setInt(1, address.getUserID());
+                            insertStmt.setString(2, address.getStreet());
+                            insertStmt.setString(3, address.getCity());
+                            insertStmt.setString(4, address.getState());
+                            insertStmt.setString(5, address.getPostalCode());
                             insertStmt.executeUpdate();
+
+                            // Get the generated key (AddressID) if needed
+                            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    address.setAddressID(generatedKeys.getInt(1));
+                                }
+                            }
                             isSaved = true;
                         }
                     }
@@ -94,6 +106,7 @@ public class DataAdapter {
         return isSaved;
     }
 
+
     public boolean saveCard(Card card) {
         boolean isSaved = false;
         try {
@@ -102,7 +115,7 @@ public class DataAdapter {
                 checkStmt.setInt(1, card.getCardID());
                 try (ResultSet resultSet = checkStmt.executeQuery()) {
                     if (resultSet.next()) {
-                        String updateQuery = "UPDATE Cards SET UserID = ?, CardNumber = ?, CardHolderName = ?, ExpirationDate = ? WHERE CardID = ?";
+                        String updateQuery = "UPDATE Cards SET UserID = ?, CardNumber = ?, CardHolder = ?, ExpDate = ? WHERE CardID = ?";
                         try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
                             updateStmt.setInt(1, card.getUserID());
                             updateStmt.setString(2, card.getCardNumber());
@@ -133,24 +146,6 @@ public class DataAdapter {
         return isSaved;
     }
 
-
-    public boolean saveReceipt(Receipt receipt) {
-        try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO Receipts VALUES (?, ?, ?)");
-            statement.setInt(1, receipt.getUserID());
-            statement.setInt(2, receipt.getOrderID());
-            statement.setString(3, receipt.getContent());
-
-            statement.execute();    // commit to the database;
-            statement.close();
-            return true; // save successfully!
-        }
-        catch (SQLException e) {
-            System.out.println("Database access error!");
-            e.printStackTrace();
-            return false;
-        }
-    }
 
 
     public User loadUser(String username, String password) {
@@ -275,7 +270,14 @@ public class DataAdapter {
     }
 
     public void deleteAddress(Address selectedAddress) {
-
+        String query = "DELETE FROM Addresses WHERE AddressID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, selectedAddress.getAddressID());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
     }
 
     public List<Address> loadAddressesByUserID(int userID) {
@@ -300,5 +302,108 @@ public class DataAdapter {
             e.printStackTrace();
         }
         return addresses;
+    }
+
+    public boolean savePayment(Payment payment) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO Payments (UserID, PaymentAmount, PaymentDate, PaymentStatus) VALUES (?, ?, ?, ?)");
+
+            statement.setInt(1, payment.getUserID());
+            statement.setDouble(2, payment.getPaymentAmount());
+            statement.setString(3, payment.getPaymentDate());
+            statement.setString(4, payment.getPaymentStatus());
+
+            statement.execute();    // commit to the database;
+            statement.close();
+
+            return true; // save successfully!
+        }
+        catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+            return false; // cannot save!
+        }
+    }
+
+
+    public boolean saveTicket(Ticket ticket) {
+        try {
+            // Check if the ticket already exists in the database
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tickets WHERE TicketID = ?");
+            statement.setInt(1, ticket.getTicketID());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) { // this ticket exists, update its fields
+                statement = connection.prepareStatement("UPDATE Tickets SET EventID = ?, UserID = ?, TicketStatus = ?, SeatNumber = ?, Price = ?, TicketType = ? WHERE TicketID = ?");
+                statement.setInt(1, ticket.getEventID());
+                statement.setInt(2, ticket.getUserID());
+                statement.setString(3, ticket.getTicketStatus());
+                statement.setString(4, ticket.getSeatNumber());
+                statement.setDouble(5, ticket.getPrice());
+                statement.setString(6, ticket.getTicketType());
+                statement.setInt(7, ticket.getTicketID());
+            }
+            else { // this ticket does not exist, use insert into
+                statement = connection.prepareStatement("INSERT INTO Tickets (EventID, UserID, TicketStatus, SeatNumber, Price, TicketType) VALUES (?, ?, ?, ?, ?, ?)");
+                statement.setInt(1, ticket.getEventID());
+                statement.setInt(2, ticket.getUserID());
+                statement.setString(3, ticket.getTicketStatus());
+                statement.setString(4, ticket.getSeatNumber());
+                statement.setDouble(5, ticket.getPrice());
+                statement.setString(6, ticket.getTicketType());
+            }
+            statement.execute();
+            resultSet.close();
+            statement.close();
+            return true;        // save successfully
+
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+            return false; // cannot save!
+        }
+    }
+
+    public Event loadEvent(int eventID) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Events WHERE EventID = ?");
+            statement.setInt(1, eventID);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                Event event = new Event();
+                event.setEventID(resultSet.getInt("EventID"));
+                event.setEventName(resultSet.getString("EventName"));
+                event.setEventDate(resultSet.getString("EventDate"));
+                event.setEventDescription(resultSet.getString("EventDescription"));
+                event.setEventLocation(resultSet.getString("EventLocation"));
+                resultSet.close();
+                statement.close();
+
+                return event;
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public int getMaxPaymentID() {
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT MAX(PaymentID) FROM Payments");
+            if (resultSet.next()) {
+                int max = resultSet.getInt(1);
+                resultSet.close();
+                statement.close();
+                return max;
+            }
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return 0;
     }
 }

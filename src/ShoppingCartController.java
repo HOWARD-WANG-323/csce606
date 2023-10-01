@@ -13,6 +13,8 @@ public class ShoppingCartController implements ActionListener {
     private Address currentAddress = null;
     private Card currentCard = null;
     private List<Ticket> addedTickets = new ArrayList<>();
+    private Payment payment = new Payment();
+
     public Address getCurrentAddress() {
         System.out.println("get current");
         return currentAddress;
@@ -39,8 +41,9 @@ public class ShoppingCartController implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == view.getBtnAdd())
             addTicket();
-        else if (e.getSource() == view.getBtnPay()){}
-//            makeOrder();
+        else if (e.getSource() == view.getBtnPay()){
+            makePayment();
+        }
         else if (e.getSource() == view.getBtnSetCard()) {
             setCard();
         } else if (e.getSource() == view.getBtnSetAddress()) {
@@ -56,6 +59,7 @@ public class ShoppingCartController implements ActionListener {
             // remove the selected row from the table model
             view.items.removeRow(selectedRow);// remove the selected ticket from the list of added tickets
             addedTickets.remove(selectedRow);
+            updateTotal();
             // refresh the layout
             view.revalidate();
             view.repaint();
@@ -69,6 +73,14 @@ public class ShoppingCartController implements ActionListener {
 
     private void setAddress(){
         Application.getInstance().getAddressView().setVisible(true);
+    }
+
+    private double calculateTotal() {
+        double total = 0;
+        for (Ticket ticket : addedTickets) {
+            total += ticket.getPrice();
+        }
+        return total;
     }
 
 
@@ -96,11 +108,13 @@ public class ShoppingCartController implements ActionListener {
                         selectedEvent.getEventDate(),
                         selectedTicket.getPrice()
                 });
-                addedTickets.add(selectedTicket);  // add to the list of added tickets
+
+                addedTickets.add(selectedTicket);
                 tickets.remove(selectedTicket);// remove from the available tickets list
                 ticketView.revalidate();
                 ticketView.repaint();
                 ticketView.dispose();
+                updateTotal();
             });
             ticketView.setVisible(true);
             eventView.revalidate();
@@ -111,10 +125,80 @@ public class ShoppingCartController implements ActionListener {
 
 
     }
+    private void updateTotal() {
+        double total = calculateTotal();
+        view.getLabTotal().setText("Total: $" + total);
+    }
 
-   public void reopenEventList(){
+    public void reopenEventList(){
        addTicket();
    }
+
+    private void makePayment(){
+        //check if address and card are set
+        if (currentAddress == null || currentCard == null){
+            JOptionPane.showMessageDialog(null, "Please set address and card before making payment.");
+            return;
+        }
+        //
+        payment.setCreditCard(currentCard);
+        //check if there is any ticket in the cart
+        if (addedTickets.size() == 0){
+            JOptionPane.showMessageDialog(null, "Please add at least one ticket to the cart.");
+            return;
+        }
+        //proceed to check out create payment, deduct quantities of the purchased products from product table, add payment to payment table
+        //set payment id, max in database +1
+        int paymentID = Application.getInstance().getDataAdapter().getMaxPaymentID() + 1;
+
+        String paymentDate = java.time.LocalDateTime.now().toString().replace("T", " ");
+        payment.setPaymentDate(paymentDate);
+
+        DataAdapter dataAdapter = Application.getInstance().getDataAdapter();
+
+        payment.setUserID(Application.getInstance().getCurrentUser().getUserID());
+        payment.setTickets(addedTickets);
+
+
+        for (Ticket ticket: addedTickets){
+            ticket.setStatus("SOLD");
+            ticket.setUserID(Application.getInstance().getCurrentUser().getUserID());
+            dataAdapter.saveTicket(ticket);
+        }
+        //add payment to payment table
+        payment.setPaymentStatus("PAID");
+        payment.setPaymenAmount(calculateTotal());
+        dataAdapter.savePayment(payment);
+        Receipt receipt = new Receipt();
+        receipt.generateAndSaveReceipt(payment);
+
+        JOptionPane.showMessageDialog(null, "Your order has been processed successfully!");
+        //clear the cart
+        payment.setPaymenAmount(0.0); // 设置支付金额为0.0
+
+        view.getLabTotal().setText("Total: $0.0");
+
+        setCurrentCard(null);
+        setCurrentAddress(null);
+
+        view.updateCurrentCardLabel(null);
+        view.updateCurrentAddressLabel(null);
+        payment = new Payment();
+        addedTickets.clear();
+        view.items.setRowCount(0);
+        view.revalidate();
+        view.repaint();
+
+
+    }
+
+    public List<Ticket> getTickets() {
+        return addedTickets;
+    }
+
+    public void setTickets(List<Ticket> addedTickets) {
+        this.addedTickets = addedTickets;
+    }
 
     public static class ShopCartView extends JFrame {
 
@@ -132,7 +216,7 @@ public class ShoppingCartController implements ActionListener {
             }
         };
         private JTable tblItems = new JTable(items);
-        private JLabel labTotal = new JLabel("Total: ");
+        private JLabel labTotal = new JLabel("Total: $0.0 ");
 
         private JLabel labCardInfo = new JLabel("No card selected.");
         private JLabel labAddressInfo = new JLabel("No address selected.");
@@ -209,6 +293,7 @@ public class ShoppingCartController implements ActionListener {
         public JLabel getLabTotal() {
             return labTotal;
         }
+
 
         public void addRow(Object[] row) {
             items.addRow(row);

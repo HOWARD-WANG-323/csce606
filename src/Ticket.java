@@ -9,6 +9,9 @@ public class Ticket {
     private String seatNumber;
     private String eventName;
     private double price;
+    private int userID;
+
+    private Event associatedEvent;
 
     public double getPrice() {
         return price;
@@ -84,4 +87,37 @@ public class Ticket {
     }
 
 
+    public void setStatus(String status) {
+        this.ticketStatus = status;
+    }
+
+    public int getUserID() {
+        return userID;
+    }
+
+    public void setUserID(int ID) {
+        userID = ID;
+    }
+
+
+
+    // Getter for associatedEvent
+    public Event getAssociatedEvent() {
+        return associatedEvent;
+    }
+
+    // Setter for associatedEvent
+    public void setAssociatedEvent(Event event) {
+        this.associatedEvent = event;
+    }
+    public String getEventDate() {
+        if(associatedEvent != null) {
+            return associatedEvent.getEventDate(); // assuming Event has a getEventDate method
+        }
+        return null;  // or handle it differently, maybe throw an exception
+    }
+
+    public double getQuantity() {
+        return 1;
+    }
 }
