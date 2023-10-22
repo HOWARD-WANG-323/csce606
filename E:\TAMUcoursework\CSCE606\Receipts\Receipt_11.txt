@@ -1,0 +1,10 @@
+Payment ID: 11
+Customer: Alex
+Payment Date/Time: 2023-10-01 21:38:00
+Ticket info: 
+Event EventDate TicketPrice Quantity
+SNH48 Team X show 2023-10-01 98.0 1.0
+
+Payment Amount: $98.0
+Delivery Address: 301 Holleman Dr E, College Station, TX, 77840
+Card Number: **** **** **** 3187
