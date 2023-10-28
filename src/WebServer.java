@@ -64,23 +64,35 @@ public class WebServer {
                     String addressData = gson.toJson(addressList);
                     sendResponse(clientSocket, addressData, "application/json");
                 }else if (apiPath.startsWith("/user")) {
-                    String[] params = apiPath.split("\\?")[1].split("&");
-                    Map<String, String> paramMap = new HashMap<>();
-                    for (String param : params) {
-                        String[] keyValue = param.split("=");
-                        paramMap.put(keyValue[0], keyValue[1]);
-                    }
-                    String username = paramMap.get("username");
-                    String password = paramMap.get("password");
+                    try {
+                        String[] params = apiPath.split("\\?")[1].split("&");
+                        Map<String, String> paramMap = new HashMap<>();
+                        for (String param : params) {
+                            String[] keyValue = param.split("=");
+                            if (keyValue.length == 2) {  // 确保key和value都存在
+                                paramMap.put(keyValue[0], keyValue[1]);
+                            }
+                        }
+                        String username = paramMap.get("username");
+                        String password = paramMap.get("password");
 
-                    User user = Application.getInstance().getDataAdapter().loadUser(username,password);
-                    String userData = gson.toJson(user);
-                    sendResponse(clientSocket, userData, "application/json");
+                        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+                            sendResponse(clientSocket, "Both username and password are required.", "text/plain");
+                            return;
+                        }
+
+                        User user = Application.getInstance().getDataAdapter().loadUser(username, password);
+                        String userData = gson.toJson(user);
+                        sendResponse(clientSocket, userData, "application/json");
+                    } catch (Exception e) {
+                        sendResponse(clientSocket, "Invalid request parameters.", "text/plain");
+                    }
                 }
                 else {
                     sendResponse(clientSocket, "Endpoint not found", "text/plain");
                 }
-            } else {
+            }
+            else {
                 sendResponse(clientSocket, "Invalid request", "text/plain");
             }
 
@@ -93,7 +105,9 @@ public class WebServer {
         OutputStream out = socket.getOutputStream();
         String response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: " + contentType + "\r\n" +
-                "Content-Length: " + responseBody.getBytes("UTF-8").length + "\r\n\r\n" +  // Use getBytes to handle UTF-8 characters
+                "Access-Control-Allow-Origin: http://localhost:63343" + "\r\n" +  // 修改这行
+                "Access-Control-Allow-Credentials: true" + "\r\n" +  // 添加这行
+                "Content-Length: " + responseBody.getBytes("UTF-8").length + "\r\n\r\n" +
                 responseBody;
         out.write(response.getBytes("UTF-8"));
         out.flush();
