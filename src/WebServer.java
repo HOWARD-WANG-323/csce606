@@ -42,12 +42,23 @@ public class WebServer {
                     Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(ticketId);
                     String ticketData = gson.toJson(ticket);
                     sendResponse(clientSocket, ticketData, "application/json");
-                } else if (apiPath.matches("^/event/\\d+$")) {
+                } else if (apiPath.matches("^/ticketByEvent/\\d+$")) {
+                    int eventId = Integer.parseInt(apiPath.split("/")[2]);
+                    List<Ticket> tickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(eventId);
+                    String ticketsData = gson.toJson(tickets);
+                    sendResponse(clientSocket, ticketsData, "application/json");
+                }
+                else if (apiPath.matches("^/event/\\d+$")) {
                     int eventId = Integer.parseInt(apiPath.split("/")[2]);
                     Event event = Application.getInstance().getDataAdapter().loadEvent(eventId);
                     String eventData = gson.toJson(event);
                     sendResponse(clientSocket, eventData, "application/json");
-                } else if (apiPath.matches("^/cards/\\d+$")) {
+                } else if (apiPath.matches("^/allEvent/")) {
+                    List<Event> eventList = Application.getInstance().getDataAdapter().loadAllEvents();
+                    String eventData = gson.toJson(eventList);
+                    sendResponse(clientSocket, eventData, "application/json");
+                }
+                else if (apiPath.matches("^/cards/\\d+$")) {
                     int userId = Integer.parseInt(apiPath.split("/")[2]);
                     List<Card> cardsList = Application.getInstance().getDataAdapter().loadCardsByUserID(userId);
                     String cardsData = gson.toJson(cardsList);
@@ -58,7 +69,7 @@ public class WebServer {
                     String eventData = gson.toJson(event);
                     sendResponse(clientSocket, eventData, "application/json");
                 }
-                else if (apiPath.matches("^/addresses/\\d+$")) {
+                else if (apiPath.matches("^/address/\\d+$")) {
                     int userId = Integer.parseInt(apiPath.split("/")[2]);
                     List<Address> addressList = Application.getInstance().getDataAdapter().loadAddressesByUserID(userId);
                     String addressData = gson.toJson(addressList);
