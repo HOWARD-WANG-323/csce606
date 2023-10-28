@@ -1,95 +1,102 @@
+import com.google.gson.Gson;
+
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.StringTokenizer;
-import com.google.gson.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-class WebServer
-{
- public static void main (String args[]) throws Exception {
-     String requestMessageLine;
-     String fileName;
-     // check if a port number is given as the first command line argument
-     // if not argument is given, use port number 6789
-     int myPort = 8080;
-     if (args.length > 0) {
-         try {
-             myPort = Integer.parseInt(args[0]);
-         } catch (ArrayIndexOutOfBoundsException e) {
-             System.out.println("Need port number as argument");
-             System.exit(-1);
-         } catch (NumberFormatException e) {
-             System.out.println("Please give port number as integer.");
-             System.exit(-1);
-         }
-     }
+public class WebServer {
 
-     // set up connection socket
-     ServerSocket listenSocket = new ServerSocket(myPort);
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(8080);
 
-     // listen (i.e. wait) for connection request
-     System.out.println("Web server waiting for request on port " + myPort);
+        while (true) {
+            Socket clientSocket = serverSocket.accept();
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-     while (true) {
-         Socket connectionSocket = listenSocket.accept();
-         Object object;
-         // set up the read and write end of the communication socket
-         BufferedReader inFromClient = new BufferedReader(
-                 new InputStreamReader(connectionSocket.getInputStream()));
-         DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-         // retrieve first line of request and set up for parsing
-         requestMessageLine = inFromClient.readLine();
-         System.out.println("Request: " + requestMessageLine);
-         if(requestMessageLine != null){
-             StringTokenizer tokenizedLine = new StringTokenizer(requestMessageLine, " /");
-             if (tokenizedLine.nextToken().equals("GET")) {
-                 fileName = tokenizedLine.nextToken();
-                 System.out.println(tokenizedLine.countTokens());
-                 // remove leading slash from line if exists
-                 if (fileName.startsWith("/") == true)
-                     fileName = fileName.substring(1);
-                 System.out.println("load: " + fileName);
-                 if(tokenizedLine.countTokens() > 2){
-                     if(fileName.equals("ticket")){
-                         int id = Integer.parseInt(tokenizedLine.nextToken());
-                         Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(id);
-                         System.out.println(ticket);
-                         System.out.println(ResponseCode.SUCCESS.getMsg());
-                         System.out.println(ResponseCode.SUCCESS.getCode());
+            // Read the request line
+            String requestLine = in.readLine();
+            if(requestLine == null){
+                continue;
+            }
+            String[] requestParts = requestLine.split(" ");
+            String httpMethod = requestParts[0];
+            String apiPath = requestParts[1];
 
-                         Result result =new Result(ResponseCode.SUCCESS.getCode(),ResponseCode.SUCCESS.getMsg(),ticket);
-                         Gson gson = new Gson();
-                         String json = gson.toJson(result);
-                         outToClient.writeBytes("HTTP/1.1 200 OK\r\n");
-                         outToClient.writeBytes("Content-Type: text/html\r\n");
-                         outToClient.writeBytes("Content-Length: " + json.length() + "\r\n");
-                         outToClient.writeBytes("\r\n");
-                         outToClient.writeBytes(json);
-                         System.out.println("finishSend");
-                         System.out.println(json);
-                         System.out.println(result);
-                     }
-                 }
-             }
-         }
-         // read and print out the rest of the request
-         connectionSocket.close();
-     }
- }
-/*   else
-     {
-      System.out.println ("Bad Request Message");
-     }  */
+            // Read the headers
+            Map<String, String> headers = new HashMap<>();
+            String headerLine;
+            while (!(headerLine = in.readLine()).isEmpty()) {
+                String[] headerParts = headerLine.split(": ", 2);
+                headers.put(headerParts[0], headerParts[1]);
+            }
+            Gson gson = new Gson();
 
+            if ("GET".equals(httpMethod)) {
+                if (apiPath.matches("^/ticket/\\d+$")) {
+                    int ticketId = Integer.parseInt(apiPath.split("/")[2]);
+                    Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(ticketId);
+                    String ticketData = gson.toJson(ticket);
+                    sendResponse(clientSocket, ticketData, "application/json");
+                } else if (apiPath.matches("^/event/\\d+$")) {
+                    int eventId = Integer.parseInt(apiPath.split("/")[2]);
+                    Event event = Application.getInstance().getDataAdapter().loadEvent(eventId);
+                    String eventData = gson.toJson(event);
+                    sendResponse(clientSocket, eventData, "application/json");
+                } else if (apiPath.matches("^/cards/\\d+$")) {
+                    int userId = Integer.parseInt(apiPath.split("/")[2]);
+                    List<Card> cardsList = Application.getInstance().getDataAdapter().loadCardsByUserID(userId);
+                    String cardsData = gson.toJson(cardsList);
+                    sendResponse(clientSocket, cardsData, "application/json");
+                } else if (apiPath.matches("^/event/\\d+$")) {
+                    int eventId = Integer.parseInt(apiPath.split("/")[2]);
+                    Event event = Application.getInstance().getDataAdapter().loadEvent(eventId);
+                    String eventData = gson.toJson(event);
+                    sendResponse(clientSocket, eventData, "application/json");
+                }
+                else if (apiPath.matches("^/addresses/\\d+$")) {
+                    int userId = Integer.parseInt(apiPath.split("/")[2]);
+                    List<Address> addressList = Application.getInstance().getDataAdapter().loadAddressesByUserID(userId);
+                    String addressData = gson.toJson(addressList);
+                    sendResponse(clientSocket, addressData, "application/json");
+                }else if (apiPath.startsWith("/user")) {
+                    String[] params = apiPath.split("\\?")[1].split("&");
+                    Map<String, String> paramMap = new HashMap<>();
+                    for (String param : params) {
+                        String[] keyValue = param.split("=");
+                        paramMap.put(keyValue[0], keyValue[1]);
+                    }
+                    String username = paramMap.get("username");
+                    String password = paramMap.get("password");
 
+                    User user = Application.getInstance().getDataAdapter().loadUser(username,password);
+                    String userData = gson.toJson(user);
+                    sendResponse(clientSocket, userData, "application/json");
+                }
+                else {
+                    sendResponse(clientSocket, "Endpoint not found", "text/plain");
+                }
+            } else {
+                sendResponse(clientSocket, "Invalid request", "text/plain");
+            }
+
+            in.close();
+            clientSocket.close();
+        }
+    }
+
+    private static void sendResponse(Socket socket, String responseBody, String contentType) throws Exception {
+        OutputStream out = socket.getOutputStream();
+        String response = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: " + contentType + "\r\n" +
+                "Content-Length: " + responseBody.getBytes("UTF-8").length + "\r\n\r\n" +  // Use getBytes to handle UTF-8 characters
+                responseBody;
+        out.write(response.getBytes("UTF-8"));
+        out.flush();
+        out.close();
+    }
 }
-
-      
-          
