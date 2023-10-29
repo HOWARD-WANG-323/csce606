@@ -44,7 +44,13 @@ public class WebServer {
                     Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(ticketId);
                     String ticketData = gson.toJson(ticket);
                     sendResponse(clientSocket, ticketData, "application/json");
-                } else if (apiPath.matches("^/event/\\d+$")) {
+                } else if (apiPath.matches("^/ticketByEvent/\\d+$")) {
+                    int eventId = Integer.parseInt(apiPath.split("/")[2]);
+                    List<Ticket> tickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(eventId);
+                    String ticketsData = gson.toJson(tickets);
+                    sendResponse(clientSocket, ticketsData, "application/json");
+                    System.out.println("ticket data: " + ticketsData);
+                }else if (apiPath.matches("^/event/\\d+$")) {
                     int eventId = Integer.parseInt(apiPath.split("/")[2]);
                     Event event = Application.getInstance().getDataAdapter().loadEvent(eventId);
                     String eventData = gson.toJson(event);
