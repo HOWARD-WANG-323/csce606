@@ -28,7 +28,7 @@ signupBtn.addEventListener('click', (e) => {
 });
 
 document.getElementById('login-button').addEventListener('click', function(event) {
-	event.preventDefault();  // 防止表单的默认提交行为
+	event.preventDefault();  // Prevent the default form submission behavior
 
 	var email = document.querySelector('.login .input[type="email"]').value;
 	var password = document.querySelector('.login .input[type="password"]').value;
@@ -44,13 +44,16 @@ document.getElementById('login-button').addEventListener('click', function(event
 		method: 'GET',
 		credentials: 'include'  // Ensure cookies are sent with the request
 	})
-		.then(response => response.json())  // 假设服务器返回JSON响应
+		.then(response => response.json())  // Assuming the server returns a JSON response
 		.then(data => {
-			if (data && data.userID) {  // 假设如果用户存在，服务器会返回一个包含 id 字段的对象
-				// 如果登录成功，重定向到 ../homepage/index.html
+			if (data && data.userID) {  // Assuming if the user exists, the server would return an object with a userID field
+				// Display the user's full name (you can adjust this as needed)
+				alert('Logged in successfully as ' + data.fullName);
+
+				// If logged in successfully, redirect to ../homepage/index.html
 				window.location.href = '../homepage/index.html';
 			} else {
-				// 如果登录失败，显示错误消息
+				// If login failed, show an error message
 				alert('Login failed: Invalid username or password.');
 			}
 		})
