@@ -49,6 +49,11 @@ public class WebServer {
                     Event event = Application.getInstance().getDataAdapter().loadEvent(eventId);
                     String eventData = gson.toJson(event);
                     sendResponse(clientSocket, eventData, "application/json");
+                }else if (apiPath.matches("^/allEvent/")) {
+                    List<Event> eventList = Application.getInstance().getDataAdapter().loadAllEvents();
+                    String eventData = gson.toJson(eventList);
+                    sendResponse(clientSocket, eventData, "application/json");
+                    System.out.println("event data: " + eventData);
                 } else if (apiPath.matches("^/cards/\\d+$")) {
                     int userId = Integer.parseInt(apiPath.split("/")[2]);
                     List<Card> cardsList = Application.getInstance().getDataAdapter().loadCardsByUserID(userId);
