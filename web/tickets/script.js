@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 使用eventID构造API请求
     fetch(`http://localhost:8080/ticketByEvent/${eventId}`, {
         method: 'GET',
-        // credentials: 'include'
+        credentials: 'include'
     })
         .then(response => response.json())
         .then(data => {

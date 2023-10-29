@@ -42,7 +42,7 @@ document.getElementById('login-button').addEventListener('click', function(event
 
 	fetch(url, {
 		method: 'GET',
-		// credentials: 'include'  // Ensure cookies are sent with the request
+		credentials: 'include'  // Ensure cookies are sent with the request
 	})
 		.then(response => response.json())  // Assuming the server returns a JSON response
 		.then(data => {
