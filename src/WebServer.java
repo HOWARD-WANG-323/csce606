@@ -1,6 +1,5 @@
 import com.google.gson.Gson;
 
-import java.awt.desktop.AppForegroundListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -135,34 +134,23 @@ public class WebServer {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Ticket ticket = gson.fromJson(requestBody.toString(),Ticket.class);
                     Application.getInstance().getDataAdapter().saveTicket(ticket);
-
-                    // 在这里，你可以进一步解析和处理JSON数据...
-                    // 这只是一个简单的响应
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 } else if ("/address/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Address address = gson.fromJson(requestBody.toString(),Address.class);
                     Application.getInstance().getDataAdapter().saveAddress(address);
-
-                    // 在这里，你可以进一步解析和处理JSON数据...
-                    // 这只是一个简单的响应
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
                 else if ("/card/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Card card = gson.fromJson(requestBody.toString(),Card.class);
                     Application.getInstance().getDataAdapter().saveCard(card);
-
-                    // 在这里，你可以进一步解析和处理JSON数据...
-                    // 这只是一个简单的响应
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
                 else if ("/payment/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Payment payment = gson.fromJson(requestBody.toString(),Payment.class);
                     Application.getInstance().getDataAdapter().savePayment(payment);
-                    // 在这里，你可以进一步解析和处理JSON数据...
-                    // 这只是一个简单的响应
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
 
