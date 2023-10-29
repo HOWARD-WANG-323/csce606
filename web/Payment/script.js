@@ -206,10 +206,14 @@ async function updatePrices() {
 
         subtotal += ticketInfo.price * quantity;  // 考虑数量
     }
+    const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
     if(ticketsArray.length === 0) {
         SHIPPING_COST = 0;
     }
     let totalPrice = subtotal * (1 + TAX_RATE) + SHIPPING_COST;
+
+    console.log('Subtotal:', subtotal);
+    console.log('Total Price:', totalPrice);
 
 
     document.getElementById('subtotal-price').textContent = `$${subtotal.toFixed(2)}`;
