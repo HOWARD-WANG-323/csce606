@@ -8,8 +8,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class WebServer {
+    private static Map<String, User> sessions = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
         ServerSocket serverSocket = new ServerSocket(8080);
@@ -63,7 +65,20 @@ public class WebServer {
                     List<Address> addressList = Application.getInstance().getDataAdapter().loadAddressesByUserID(userId);
                     String addressData = gson.toJson(addressList);
                     sendResponse(clientSocket, addressData, "application/json");
-                }else if (apiPath.startsWith("/user")) {
+                }else if (apiPath.matches("/getUserName")) {
+                    String sessionId = headers.get("Cookie").split("sessionId=")[1];
+                    User user = sessions.get(sessionId);
+                    if (user != null) {
+                        Map<String, String> responseData = new HashMap<>();
+                        responseData.put("fullName", user.getFullName());
+                        sendResponse(clientSocket, gson.toJson(responseData), "application/json", null);
+                    } else {
+                        Map<String, String> errorData = new HashMap<>();
+                        errorData.put("error", "User not found");
+                        sendResponse(clientSocket, gson.toJson(errorData), "application/json");
+                    }
+                }
+                else if (apiPath.startsWith("/user")) {
                     try {
                         String[] params = apiPath.split("\\?")[1].split("&");
                         Map<String, String> paramMap = new HashMap<>();
@@ -82,8 +97,19 @@ public class WebServer {
                         }
 
                         User user = Application.getInstance().getDataAdapter().loadUser(username, password);
-                        String userData = gson.toJson(user);
-                        sendResponse(clientSocket, userData, "application/json");
+                        if (user != null) {
+                            String sessionId = UUID.randomUUID().toString();
+                            sessions.put(sessionId, user);
+                            System.out.println("sessionId: " + sessionId);
+                            String userData = gson.toJson(user);
+                            sendResponse(clientSocket, userData, "application/json",sessionId);
+                            System.out.println("user data: " + userData);
+                        } else {
+                            sendResponse(clientSocket, "Invalid username or password.", "text/plain");
+                            return;
+                        }
+
+
                     } catch (Exception e) {
                         sendResponse(clientSocket, "Invalid request parameters.", "text/plain");
                     }
@@ -102,14 +128,24 @@ public class WebServer {
     }
 
     private static void sendResponse(Socket socket, String responseBody, String contentType) throws Exception {
+        sendResponse(socket, responseBody, contentType, null);
+    }
+
+    private static void sendResponse(Socket socket, String responseBody, String contentType, String sessionId) throws Exception {
         OutputStream out = socket.getOutputStream();
-        String response = "HTTP/1.1 200 OK\r\n" +
-                "Content-Type: " + contentType + "\r\n" +
-                "Access-Control-Allow-Origin: http://localhost:63343" + "\r\n" +  // 修改这行
-                "Access-Control-Allow-Credentials: true" + "\r\n" +  // 添加这行
-                "Content-Length: " + responseBody.getBytes("UTF-8").length + "\r\n\r\n" +
-                responseBody;
-        out.write(response.getBytes("UTF-8"));
+
+        StringBuilder responseHeaders = new StringBuilder();
+        responseHeaders.append("HTTP/1.1 200 OK\r\n");
+        responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
+        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63343\r\n");
+        responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
+        responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
+
+        if (sessionId != null) {
+            responseHeaders.append("Set-Cookie: sessionId=").append(sessionId).append("; HttpOnly; SameSite=Strict\r\n");
+        }
+
+        out.write((responseHeaders.toString() + "\r\n" + responseBody).getBytes("UTF-8"));
         out.flush();
         out.close();
     }

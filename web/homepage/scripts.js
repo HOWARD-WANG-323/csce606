@@ -52,3 +52,50 @@ document.addEventListener('DOMContentLoaded', function() {
         eventList.innerHTML += createEventItem(event);
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var currentDate = new Date();
+    var hour = currentDate.getHours();
+    var timePeriod;
+
+    if (hour >= 0 && hour < 6) {
+        timePeriod = "night";
+    } else if (hour >= 6 && hour < 12) {
+        timePeriod = "morning";
+    } else if (hour >= 12 && hour < 18) {
+        timePeriod = "afternoon";
+    } else {
+        timePeriod = "evening";
+    }
+
+    document.getElementById('time-period').textContent = timePeriod;
+
+    // Fetch user fullName from the server
+    fetchUserFullName();
+
+});
+
+function fetchUserFullName() {
+    fetch('http://localhost:8080/getUserName', {
+        method: 'GET',
+        credentials: 'include'
+    })
+        .then(response => {
+            // 检查响应的内容类型
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return response.json();
+            } else {
+                throw new TypeError("Oops, we didn't get JSON!");
+            }
+        })
+        .then(data => {
+            if (data && data.fullName) {
+                document.getElementById('user-fullname').textContent = data.fullName;
+            } else if (data && data.error) {
+                console.error(data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
