@@ -130,3 +130,51 @@ radios.forEach(radio => {
 // 初始检查
 checkRadioStatus();
 
+function closeCurrentPopup() {
+    window.close();
+}
+function storeTicketInLocalStorage(ticketID) {
+    let ticketsArray = localStorage.getItem('selectedTickets');
+    if (ticketsArray) {
+        ticketsArray = JSON.parse(ticketsArray);
+    } else {
+        ticketsArray = [];
+    }
+
+    if (!ticketsArray.includes(ticketID)) { // 避免重复添加
+        ticketsArray.push(ticketID);
+    }
+
+    localStorage.setItem('selectedTickets', JSON.stringify(ticketsArray));
+}
+
+function getSelectedTicket() {
+    const radios = document.querySelectorAll('.checkbox-ticket');
+    let selectedTicketID = null;
+    radios.forEach(radio => {
+        if (radio.checked) {
+            selectedTicketID = radio.id.replace('ticket-', ''); // 从radio的ID中提取ticketID
+        }
+    });
+    return selectedTicketID;
+}
+
+function openCheckoutPage() {
+    const url = `../Payment/checkout.html`;
+    window.open(url, '_blank');
+}
+
+document.getElementById('buyTicketBtn').addEventListener('click', function(event) {
+    event.preventDefault(); // 阻止默认的a标签行为
+
+    let selectedTicket = getSelectedTicket();
+
+    if (selectedTicket) {
+        storeTicketInLocalStorage(selectedTicket);
+        openCheckoutPage(selectedTicket);
+        closeCurrentPopup();
+    } else {
+        alert('Please choose a ticket.');
+    }
+});
+

@@ -1,6 +1,7 @@
 function createTicketItem(item) {
-    return `
-            <div class="row d-flex justify-content-center border-top">
+    const container = document.createElement('div');
+    container.className = "row d-flex justify-content-center border-top";
+    container.innerHTML = `
                 <div class="col-5">
                     <div class="row d-flex">
                         <div class="book">
@@ -21,8 +22,8 @@ function createTicketItem(item) {
                             <div class="row d-flex justify-content-end px-3">
                                 <p class="mb-0" id="cnt${item.ticketID}">1</p>
                                 <div class="d-flex flex-column plus-minus">
-                                    <span class="vsm-text plus">+</span>
-                                    <span class="vsm-text minus">-</span>
+                                <span class="vsm-text plus">+</span>
+                                <span class="vsm-text minus">-</span>
                                 </div>
                             </div>
                         </div>
@@ -31,7 +32,25 @@ function createTicketItem(item) {
                         </div>
                     </div>
                 </div>
-            </div>`;
+            `;
+    const plusButton = container.querySelector('.plus');
+    const minusButton = container.querySelector('.minus');
+
+    plusButton.addEventListener('click', function() {
+        const countElem = plusButton.parentElement.previousElementSibling;
+        countElem.textContent = Number(countElem.textContent) + 1;
+        updatePrices();
+    });
+
+    minusButton.addEventListener('click', function() {
+        const countElem = minusButton.parentElement.previousElementSibling;
+        if (Number(countElem.textContent) > 0) {
+            countElem.textContent = Number(countElem.textContent) - 1;
+        }
+        updatePrices();
+    });
+
+    return container;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -44,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(ticketData => {
                 const ticketItemsContainer = document.getElementById('ticket-items-container');
-                ticketItemsContainer.insertAdjacentHTML('beforeend', createTicketItem(ticketData));
+                ticketItemsContainer.appendChild(createTicketItem(ticketData));
                 return getEventfromTicketID(ticketID);
             })
             .then(eventID => {
@@ -88,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
-    // Plus button functionality
+    /*// Plus button functionality
     let plusButtons = document.querySelectorAll('.plus-minus .plus');
     plusButtons.forEach(function(button) {
         button.addEventListener('click', function() {
@@ -106,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 countElem.textContent = Number(countElem.textContent) - 1;
             }
         });
-    });
+    });*/
 
 });
 
@@ -135,7 +154,15 @@ async function updatePrices() {
 
     for (let ticketID of cartItems) {
         let ticketInfo = await fetchTicketInfo(ticketID);
-        subtotal += ticketInfo.price;
+
+        // 获取票商品的数量
+        const countElem = document.getElementById(`cnt${ticketID}`);
+        let quantity = 1;  // 默认数量为1
+        if (countElem) {
+            quantity = parseInt(countElem.textContent, 10);
+        }
+
+        subtotal += ticketInfo.price * quantity;  // 考虑数量
     }
 
     let totalPrice = subtotal + SHIPPING_COST;
@@ -146,3 +173,4 @@ async function updatePrices() {
     document.getElementById('total-price').textContent = `$${totalPrice.toFixed(2)}`;
     document.getElementById('check-amt').textContent = `$${totalPrice.toFixed(2)}`;
 }
+
