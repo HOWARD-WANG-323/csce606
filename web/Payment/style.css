@@ -1,6 +1,4 @@
 @import "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css";
-@import "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js";
-@import "https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js";
 @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.css";
 
 body {
@@ -34,8 +32,8 @@ body {
 }
 
 .book, .book-img {
-    width: 120px;
-    height: 180px;
+    width: 90px;
+    height: 90px;
     border-radius: 5px;
 }
 

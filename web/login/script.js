@@ -49,7 +49,7 @@ document.getElementById('login-button').addEventListener('click', function(event
 			if (data && data.userID) {  // Assuming if the user exists, the server would return an object with a userID field
 				// Display the user's full name (you can adjust this as needed)
 				alert('Logged in successfully as ' + data.fullName);
-
+				console.log(data);
 				// If logged in successfully, redirect to ../homepage/index.html
 				window.location.href = '../homepage/index.html';
 			} else {
