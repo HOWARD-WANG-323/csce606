@@ -39,9 +39,13 @@ function createEventItem(event) {
                 <p>${event.eventLocation}</p>
             </div>
             <div class="fix"></div>
-            <button class="tickets" id="select">Select Tickets</button>
+            <button class="tickets" id="select" data-eventid=${event.eventID} onclick="openTicketWindow(this)">Select Tickets</button>
         </div>
     </div>`;
+}
+function openTicketWindow(button) {
+    var eventId = button.getAttribute('data-eventid');
+    window.open(`../tickets/index.html?eventID=${eventId}`, 'popUpWindow', 'height=800,width=600,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
 }
 
 // Append events to the DOM
