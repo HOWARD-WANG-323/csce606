@@ -5,7 +5,7 @@ function createTicketItem(item) {
                 <div class="col-5">
                     <div class="row d-flex">
                         <div class="book">
-                            <img src="https://file.48.cn/Shop/Product/202310/202310241134153501.png" class="book-img">
+                            <img src="https://www.barclayscenter.com/assets/img/New-York_Website-Thumbnail-1-656X596safety-around-bottom-e2d40dd0c9.jpg" class="book-img">
                         </div>
                         <div class="my-auto flex-column d-flex pad-left">
                             <h6 class="mob-text" id="eventName${item.ticketID}">Loading...</h6>
@@ -140,7 +140,7 @@ function fetchTicketInfo(ticketID) {
 
 // Example prices and tax rate (adjust as needed)
 const TAX_RATE = 0.0723;  // 7.23% tax rate
-const SHIPPING_COST = 0;  // digital goods don't have shipping costs
+const SHIPPING_COST = 2.99;  // digital goods don't have shipping costs
 
 async function updatePrices() {
     let cartItems = localStorage.getItem('selectedTickets');
