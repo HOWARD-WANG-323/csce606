@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function fetchUserFullName() {
     fetch('http://localhost:8080/getUserName', {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
     })
         .then(response => {
             // 检查响应的内容类型
@@ -104,7 +104,7 @@ function fetchAllEvents() {
 
     fetch('http://localhost:8080/allEvent/', {
         method: 'GET',
-        credentials: 'include'
+        // credentials: 'include'
     })
         .then(response => {
             if (!response.ok) {
