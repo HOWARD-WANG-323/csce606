@@ -36,7 +36,6 @@ public class WebServer {
                 String[] headerParts = headerLine.split(": ", 2);
                 headers.put(headerParts[0], headerParts[1]);
             }
-            System.out.println("headers: "+ headers);
             Gson gson = new Gson();
 
             if ("GET".equals(httpMethod)) {
@@ -175,8 +174,7 @@ public class WebServer {
         StringBuilder responseHeaders = new StringBuilder();
         responseHeaders.append("HTTP/1.1 200 OK\r\n");
         responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
-        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63342\r\n");
-        responseHeaders.append("Access-Control-Allow-Methods: GET, POST, PUT, DELETE\r\n");
+        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63343\r\n");
         responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
         responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
 

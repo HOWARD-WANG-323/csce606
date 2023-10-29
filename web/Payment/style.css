@@ -190,3 +190,12 @@ button:focus {
 .footer-container .footer-text {
     margin-top: 10px;  /* Space above text */
 }
+
+.rounded-square {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px; /* Adjust for desired roundness */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

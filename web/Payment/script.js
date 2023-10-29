@@ -5,7 +5,7 @@ function createTicketItem(item) {
                 <div class="col-5">
                     <div class="row d-flex">
                         <div class="book">
-                            <img src="https://file.48.cn/Shop/Product/202310/202310241134153501.png" class="book-img">
+                            <img src="https://www.barclayscenter.com/assets/img/New-York_Website-Thumbnail-1-656X596safety-around-bottom-e2d40dd0c9.jpg" class="book-img">
                         </div>
                         <div class="my-auto flex-column d-flex pad-left">
                             <h6 class="mob-text" id="eventName${item.ticketID}">Loading...</h6>
@@ -28,8 +28,14 @@ function createTicketItem(item) {
                             </div>
                         </div>
                         <div class="col-4">
+                        <div class="d-flex flex-column align-items-end">
                             <h6 class="mob-text">$${item.price}</h6>
+                            <button class="btn btn-danger delete-btn rounded-square">×</button>
                         </div>
+                        </div>
+                        
+                        
+                </div>
                     </div>
                 </div>
             `;
@@ -50,11 +56,47 @@ function createTicketItem(item) {
         updatePrices();
     });
 
+    const deleteButton = container.querySelector('.delete-btn');
+
+    deleteButton.addEventListener('click', function() {
+
+
+
+        // Remove the ticket item from localStorage
+        const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
+        console.log('Before delete:', ticketsArray);
+        const index = ticketsArray.indexOf(String(item.ticketID)); //
+        console.log('Item Ticket ID Type:', typeof item.ticketID);
+        console.log('Array Types:', ticketsArray.map(ticket => typeof ticket));
+
+        console.log('Index:', index);
+        if (index > -1) {
+            ticketsArray.splice(index, 1);
+        }
+        localStorage.setItem('selectedTickets', JSON.stringify(ticketsArray));
+        console.log('After delete:', ticketsArray);
+
+        // Remove the ticket item from the cart
+        container.remove();
+        // Update prices
+        updatePrices();
+        if(ticketsArray.length === 0) {
+            document.getElementById('cart-placeholder').style.display = 'block';
+        }
+    });
+
+
     return container;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
+
+    if (ticketsArray.length === 0) {
+        document.getElementById('cart-placeholder').style.display = 'block';
+        return;
+    }
+
     ticketsArray.forEach(ticketID => {
         fetch(`http://localhost:8080/ticket/${ticketID}`, {
             method: 'GET',
@@ -140,7 +182,7 @@ function fetchTicketInfo(ticketID) {
 
 // Example prices and tax rate (adjust as needed)
 const TAX_RATE = 0.0723;  // 7.23% tax rate
-const SHIPPING_COST = 0;  // digital goods don't have shipping costs
+let SHIPPING_COST = 2.99;  // digital goods don't have shipping costs
 
 async function updatePrices() {
     let cartItems = localStorage.getItem('selectedTickets');
@@ -164,9 +206,11 @@ async function updatePrices() {
 
         subtotal += ticketInfo.price * quantity;  // 考虑数量
     }
+    if(ticketsArray.length === 0) {
+        SHIPPING_COST = 0;
+    }
+    let totalPrice = subtotal * (1 + TAX_RATE) + SHIPPING_COST;
 
-    let totalPrice = subtotal + SHIPPING_COST;
-    totalPrice += totalPrice * TAX_RATE;
 
     document.getElementById('subtotal-price').textContent = `$${subtotal.toFixed(2)}`;
     document.getElementById('shipping-price').textContent = `$${SHIPPING_COST.toFixed(2)}`;
