@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link href="https://fonts.googleapis.com/css?family=Cabin|Indie+Flower|Inknut+Antiqua|Lora|Ravi+Prakash" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
 </head>
 <body>
 <div class="container px-4 py-5 mx-auto">
@@ -52,17 +55,17 @@
             <div class="row px-2">
               <div class="form-group col-md-6">
                 <label class="form-control-label">Name on Card</label>
-                <input type="text" id="cname" name="cname" placeholder="Johnny Doe">
+                <input type="text" id="cname" name="cname" placeholder="Alex Zheng">
               </div>
               <div class="form-group col-md-6">
                 <label class="form-control-label">Card Number</label>
-                <input type="text" id="cnum" name="cnum" placeholder="1111 2222 3333 4444">
+                <input type="text" id="cnum" name="cnum" placeholder="4321 3210 0123 4567">
               </div>
             </div>
             <div class="row px-2">
               <div class="form-group col-md-6">
                 <label class="form-control-label">Expiration Date</label>
-                <input type="text" id="exp" name="exp" placeholder="MM/YYYY">
+                <input type="text" id="exp" name="exp" placeholder="MM/YY">
               </div>
               <div class="form-group col-md-6">
                 <label class="form-control-label">CVV</label>
@@ -73,20 +76,21 @@
           <div class="col-lg-4 mt-2">
             <div class="row d-flex justify-content-between px-4">
               <p class="mb-1 text-left">Subtotal</p>
-              <h6 class="mb-1 text-right">$23.49</h6>
+              <h6 class="mb-1 text-right" id="subtotal-price">$0.00</h6>
             </div>
             <div class="row d-flex justify-content-between px-4">
               <p class="mb-1 text-left">Shipping</p>
-              <h6 class="mb-1 text-right">$2.99</h6>
+              <h6 class="mb-1 text-right" id="shipping-price">$0.00</h6>
             </div>
             <div class="row d-flex justify-content-between px-4" id="tax">
               <p class="mb-1 text-left">Total (tax included)</p>
-              <h6 class="mb-1 text-right">$26.48</h6>
+              <h6 class="mb-1 text-right" id="total-price">$0.00</h6>
             </div>
+
             <button class="btn-block btn-blue">
                             <span>
                                 <span id="checkout">Checkout</span>
-                                <span id="check-amt">$26.48</span>
+                                <span id="check-amt">$0.00</span>
                             </span>
             </button>
           </div>
