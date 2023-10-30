@@ -91,54 +91,147 @@ function createTicketItem(item) {
     return container;
 }
 
+function isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr) {
+    try {
+        if (!/^\d{16}$/.test(cardNumber) || !cardNumber) {
+            console.log(cardNumber);
+            throw new Error("Invalid card number");
+        }
+
+        if (!cardHolderName) {
+            throw new Error("Invalid card holder name");
+        }
+
+        const dateParts = dateStr.split("/");
+        if (dateParts.length !== 2) {
+            throw new Error("Invalid date format");
+        }
+
+        const month = parseInt(dateParts[0], 10);
+        const year = parseInt(dateParts[1], 10);
+        const currentDate = new Date().toISOString().split("T")[0].replace(/-/g, "/");
+        const currentDateParts = currentDate.split("/");
+        const currentMonth = parseInt(currentDateParts[1], 10);
+        const currentYear = parseInt(currentDateParts[0].slice(-2), 10);
+
+        if (
+            year < currentYear ||
+            month < 1 ||
+            month > 12 ||
+            (year === currentYear && month < currentMonth) ||
+            !month ||
+            !year
+        ) {
+            throw new Error("Invalid expiration date");
+        }
+        if (!cvvStr) {
+            throw new Error("Invalid CVV");
+        }
+
+        const cvv = parseInt(cvvStr, 10);
+        if (isNaN(cvv)) {
+            throw new Error("Invalid CVV");
+        }
+
+        if (cvv < 100 || cvv > 999) {
+            throw new Error("Invalid CVV");
+        }
+        return true;
+    } catch (e) {
+        // Using 'alert' for simplicity. In a real application, consider more user-friendly error displays.
+        alert(e.message);
+        return false;
+    }
+}
+
+function isAddressValid(street, city, state, zipCode) {
+    try {
+        // Verify that the street is not empty
+        if (!street) {
+            throw new Error("Invalid street");
+        }
+
+        // Verify that the city is not empty
+        if (!city) {
+            throw new Error("Invalid city");
+        }
+
+        // Verify that the state is not empty
+        if (!state) {
+            throw new Error("Invalid state");
+        }
+
+        // Verify that the zip code is 5 digits
+        if (!/^\d{5}$/.test(zipCode) || !zipCode) {
+            throw new Error("Invalid zip code");
+        }
+
+        return true;
+    } catch (e) {
+        alert(e.message);
+        return false;
+    }
+}
+
 checkOutBtn.addEventListener('click', (e) => {
     console.log(localStorage);
     console.log(document.getElementById('total-price').textContent.substring(1));
-    let totalPrice = document.getElementById('total-price').textContent.substring(1);
-    let paymentDate = new Date();
-    console.log(paymentDate.toString())
-
-    const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
-
-    if (ticketsArray.length === 0) {
-        document.getElementById('cart-placeholder').style.display = 'block';
+    let cardNumber = document.getElementById('cnum').value;
+    let cardHolderName = document.getElementById('cname').value;
+    let dateStr = document.getElementById('exp').value;
+    let cvvStr = document.getElementById('cvv').value;
+    let street = document.getElementById('street').value;
+    let city = document.getElementById('city').value;
+    let state = document.getElementById('state').value;
+    let zipCode = document.getElementById('zip').value;
+    if (!isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr) || !isAddressValid(street, city, state, zipCode)){
         return;
     }
+        let totalPrice = document.getElementById('total-price').textContent.substring(1);
+        let paymentDate = new Date();
+        console.log(paymentDate.toString())
 
-    ticketsArray.forEach(ticketID => {
-        let data = {
-            "ticketID": ticketID,
-            "eventID": null,
-            "ticketStatus": "SOLD",
-            "ticketType": "Regular",
-            "price": null,
-            "userID": null
+        const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
+
+        if (ticketsArray.length === 0) {
+            document.getElementById('cart-placeholder').style.display = 'block';
+            return;
         }
-        fetch(`http://localhost:8080/ticket/`, {
+
+        ticketsArray.forEach(ticketID => {
+            let data = {
+                "ticketID": ticketID,
+                "eventID": null,
+                "ticketStatus": "SOLD",
+                "ticketType": "Regular",
+                "price": null,
+                "userID": null
+            }
+            fetch(`http://localhost:8080/ticket/`, {
+                method: 'POST',
+                credentials: 'include',
+                body: JSON.stringify(data),
+            })
+                .then(response => console.log(response))
+        });
+        let payment = {
+            "paymentID": null,
+            "paymentDate": paymentDate,
+            "paymentStatus": "PAID",
+            "card": null,
+            "userID": null,
+            "paymentAmount": totalPrice,
+        }
+        fetch(`http://localhost:8080/payment/`, {
             method: 'POST',
             credentials: 'include',
-            body: JSON.stringify(data),
+            body: JSON.stringify(payment),
         })
-            .then(response => console.log(response))
-    });
-    let payment = {
-        "paymentID": null,
-        "paymentDate": paymentDate,
-        "paymentStatus": "PAID",
-        "card": null,
-        "userID": null,
-        "paymentAmount": totalPrice,
-    }
-    fetch(`http://localhost:8080/payment/`, {
-        method: 'POST',
-        credentials: 'include',
-        body: JSON.stringify(payment),
-    })
-        .then(response => {
-            console.log(response);
-            alert('Successfully Paid!!!');
-            window.location.href = '../homepage/index.html';
-        })
+            .then(response => {
+                console.log(response);
+                alert('Successfully Paid!!!');
+                window.location.href = '../homepage/index.html';
+            })
 });
 
 document.addEventListener('DOMContentLoaded', function() {
