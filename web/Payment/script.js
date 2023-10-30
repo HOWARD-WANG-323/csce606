@@ -184,7 +184,19 @@ checkOutBtn.addEventListener('click', (e) => {
     let city = document.getElementById('city').value;
     let state = document.getElementById('state').value;
     let zipCode = document.getElementById('zip').value;
-    if (!isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr) || !isAddressValid(street, city, state, zipCode)){
+    let truncatedCard = cardNumber.slice(0, 6) + '*'.repeat(cardNumber.length - 10) + cardNumber.slice(-4);
+    console.log("truncatedCard: ", truncatedCard);
+    let reciept = {
+        paymentID: null,
+        customerName: cardHolderName,
+        paymentDateTime:null,
+        paymentAmount:null,
+        truncatedCardNumber : null,
+        deliveryAddress: street +", " + city + ", " + state+ ", " + zipCode,
+        ticketDetails: [],
+    }
+    reciept.truncatedCardNumber = truncatedCard;
+    if ( !isAddressValid(street, city, state, zipCode) || !isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr)){
         return;
     }
         let totalPrice = document.getElementById('total-price').textContent.substring(1);
@@ -212,7 +224,11 @@ checkOutBtn.addEventListener('click', (e) => {
                 credentials: 'include',
                 body: JSON.stringify(data),
             })
-                .then(response => console.log(response))
+                .then(response => response.text())
+                .then(data=>{
+                    console.log(data);
+                    reciept.ticketDetails.push(data);
+                })
         });
         let payment = {
             "paymentID": null,
@@ -222,16 +238,35 @@ checkOutBtn.addEventListener('click', (e) => {
             "userID": null,
             "paymentAmount": totalPrice,
         }
+        reciept.paymentAmount = totalPrice;
+        reciept.paymentDateTime = paymentDate;
         fetch(`http://localhost:8080/payment/`, {
             method: 'POST',
             credentials: 'include',
             body: JSON.stringify(payment),
         })
-            .then(response => {
-                console.log(response);
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                reciept.paymentID = data;
                 alert('Successfully Paid!!!');
+                const blob = new Blob([JSON.stringify(reciept)], {type: 'text/plain;charset=utf-8'});
+
+                // 创建一个链接并将其指向 Blob
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = "reciept.txt";
+
+                // 将链接添加到页面并触发点击，然后移除链接
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // 释放 Blob URL
+                URL.revokeObjectURL(a.href);
                 window.location.href = '../homepage/index.html';
             })
+
 });
 
 document.addEventListener('DOMContentLoaded', function() {

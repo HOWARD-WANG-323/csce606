@@ -141,7 +141,7 @@ public class WebServer {
                     ticket1.setStatus(ticket.getTicketStatus());
                     System.out.println(ticket.getPrice());
                     Application.getInstance().getDataAdapter().saveTicket(ticket1);
-                    sendResponse(clientSocket, "Received your JSON data", "text/plain");
+                    sendResponse(clientSocket, gson.toJson(ticket1), "text/plain");
                 } else if ("/address/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Address address = gson.fromJson(requestBody.toString(),Address.class);
@@ -161,7 +161,8 @@ public class WebServer {
                     User user = sessions.get(sessionId);
                     payment.setUserID(user.getUserID());
                     Application.getInstance().getDataAdapter().savePayment(payment);
-                    sendResponse(clientSocket, "Received your JSON data", "text/plain");
+                    String paymentID = Integer.toString(Application.getInstance().getDataAdapter().getMaxPaymentID());
+                    sendResponse(clientSocket, paymentID, "text/plain");
                 }
 
             }

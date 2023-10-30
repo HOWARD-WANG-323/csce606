@@ -26,13 +26,12 @@ public class Receipt {
             String cardNumber = payment.getCreditCard().getCardNumber();
             this.truncatedCardNumber = cardNumber.substring(cardNumber.length() - 4);
         }
-
         // generate the receipt content
-        String receiptContent = generateReceiptText();
-
-        // save the receipt to file
-        String filePath = "E:\\TAMUcoursework\\CSCE606\\Receipts\\Receipt_" + this.paymentID + ".txt";
-        saveReceiptToFile(receiptContent, filePath);
+//        String receiptContent = generateReceiptText();
+//
+//        // save the receipt to file
+//        String filePath = "E:\\TAMUcoursework\\CSCE606\\Receipts\\Receipt_" + this.paymentID + ".txt";
+//        saveReceiptToFile(receiptContent, filePath);
     }
 
 
