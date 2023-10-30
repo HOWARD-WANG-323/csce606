@@ -1,4 +1,5 @@
 import com.google.gson.Gson;
+import com.sun.tools.jconsole.JConsoleContext;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -130,26 +131,35 @@ public class WebServer {
                     requestBody.append((char) in.read());
                 }
 
-                if ("/ticket/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
+                if ("/ticket/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Ticket ticket = gson.fromJson(requestBody.toString(),Ticket.class);
-                    Application.getInstance().getDataAdapter().saveTicket(ticket);
+                    Ticket ticket1 = Application.getInstance().getDataAdapter().loadTicket(ticket.getTicketID());
+                    String sessionId = headers.get("Cookie").split("sessionId=")[1];
+                    User user = sessions.get(sessionId);
+                    ticket1.setUserID(user.getUserID());
+                    ticket1.setStatus(ticket.getTicketStatus());
+                    System.out.println(ticket.getPrice());
+                    Application.getInstance().getDataAdapter().saveTicket(ticket1);
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
-                } else if ("/address/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
+                } else if ("/address/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Address address = gson.fromJson(requestBody.toString(),Address.class);
                     Application.getInstance().getDataAdapter().saveAddress(address);
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
-                else if ("/card/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
+                else if ("/card/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Card card = gson.fromJson(requestBody.toString(),Card.class);
                     Application.getInstance().getDataAdapter().saveCard(card);
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
-                else if ("/payment/".equals(apiPath) && "application/json".equals(headers.get("Content-Type"))) {
+                else if ("/payment/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Payment payment = gson.fromJson(requestBody.toString(),Payment.class);
+                    String sessionId = headers.get("Cookie").split("sessionId=")[1];
+                    User user = sessions.get(sessionId);
+                    payment.setUserID(user.getUserID());
                     Application.getInstance().getDataAdapter().savePayment(payment);
                     sendResponse(clientSocket, "Received your JSON data", "text/plain");
                 }
@@ -174,7 +184,7 @@ public class WebServer {
         StringBuilder responseHeaders = new StringBuilder();
         responseHeaders.append("HTTP/1.1 200 OK\r\n");
         responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
-        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63343\r\n");
+        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63342\r\n");
         responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
         responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
 

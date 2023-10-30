@@ -1,3 +1,5 @@
+const checkOutBtn = document.getElementById('checkoutBtn');
+
 function createTicketItem(item) {
     const container = document.createElement('div');
     container.className = "row d-flex justify-content-center border-top";
@@ -34,7 +36,7 @@ function createTicketItem(item) {
                         </div>
                         </div>
                         
-                        
+              
                 </div>
                     </div>
                 </div>
@@ -88,6 +90,56 @@ function createTicketItem(item) {
 
     return container;
 }
+
+checkOutBtn.addEventListener('click', (e) => {
+    console.log(localStorage);
+    console.log(document.getElementById('total-price').textContent.substring(1));
+    let totalPrice = document.getElementById('total-price').textContent.substring(1);
+    let paymentDate = new Date();
+    console.log(paymentDate.toString())
+
+    const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
+
+    if (ticketsArray.length === 0) {
+        document.getElementById('cart-placeholder').style.display = 'block';
+        return;
+    }
+
+    ticketsArray.forEach(ticketID => {
+        let data = {
+            "ticketID": ticketID,
+            "eventID": null,
+            "ticketStatus": "SOLD",
+            "ticketType": "Regular",
+            "price": null,
+            "userID": null
+        }
+        fetch(`http://localhost:8080/ticket/`, {
+            method: 'POST',
+            credentials: 'include',
+            body: JSON.stringify(data),
+        })
+            .then(response => console.log(response))
+    });
+    let payment = {
+        "paymentID": null,
+        "paymentDate": paymentDate,
+        "paymentStatus": "PAID",
+        "card": null,
+        "userID": null,
+        "paymentAmount": totalPrice,
+    }
+    fetch(`http://localhost:8080/payment/`, {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify(payment),
+    })
+        .then(response => {
+            console.log(response);
+            alert('Successfully Paid!!!');
+            window.location.href = '../homepage/index.html';
+        })
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     const ticketsArray = JSON.parse(localStorage.getItem('selectedTickets') || "[]");
