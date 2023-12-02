@@ -15,7 +15,9 @@ public class MainScreen extends JFrame {
         User curUser = Application.getInstance().getCurrentUser();
         JLabel user = new JLabel("Current User: " + curUser.getUsername());
         user.setFont(new Font("Sans Serif", Font.PLAIN, 16));
-
+        if (curUser.getUserID() != 1) {
+            btnFind.setVisible(false); // 如果不是 1，则隐藏管理票务按钮
+        }
         JPanel panelUser = new JPanel();
         panelUser.add(user);
         this.getContentPane().add(panelUser);

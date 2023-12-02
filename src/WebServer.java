@@ -131,7 +131,7 @@ public class WebServer {
                     requestBody.append((char) in.read());
                 }
 
-                if ("/ticket/".equals(apiPath)) {
+               if ("/ticket/".equals(apiPath)) {
                     System.out.println("Received JSON Data: " + requestBody.toString());
                     Ticket ticket = gson.fromJson(requestBody.toString(),Ticket.class);
                     Ticket ticket1 = Application.getInstance().getDataAdapter().loadTicket(ticket.getTicketID());
@@ -165,6 +165,7 @@ public class WebServer {
                     sendResponse(clientSocket, paymentID, "text/plain");
                 }
 
+
             }
             else {
                 sendResponse(clientSocket, "Invalid request", "text/plain");
@@ -173,6 +174,12 @@ public class WebServer {
             in.close();
             clientSocket.close();
         }
+    }
+
+    private static boolean checkUserData(User newUser) {
+        //try tto get user from database, if doesn't exist, return true
+        User user = Application.getInstance().getDataAdapter().loadUser(newUser.getUsername(),newUser.getPassword());
+        return user == null;
     }
 
     private static void sendResponse(Socket socket, String responseBody, String contentType) throws Exception {
@@ -185,7 +192,7 @@ public class WebServer {
         StringBuilder responseHeaders = new StringBuilder();
         responseHeaders.append("HTTP/1.1 200 OK\r\n");
         responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
-        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63342\r\n");
+        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63343\r\n");
         responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
         responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
 

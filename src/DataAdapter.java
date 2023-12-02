@@ -147,7 +147,6 @@ public class DataAdapter {
     }
 
 
-
     public User loadUser(String username, String password) {
         try {
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE UserName = ? AND Password = ?");
@@ -197,6 +196,7 @@ public class DataAdapter {
         }
         return events;
     }
+
     public List<Ticket> loadTicketsByEventId(int eventId) {
         List<Ticket> tickets = new ArrayList<>();
 
@@ -210,7 +210,7 @@ public class DataAdapter {
 
             ResultSet resultSet = statement.executeQuery();
 
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 Ticket ticket = new Ticket();
 
                 ticket.setTicketID(resultSet.getInt("TicketID"));
@@ -243,7 +243,7 @@ public class DataAdapter {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
 
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 Card card = new Card();
                 card.setCardID(resultSet.getInt(1));
                 card.setUserID(resultSet.getInt(2));
@@ -284,16 +284,16 @@ public class DataAdapter {
     public List<Address> loadAddressesByUserID(int userID) {
         //load addresses from database by userID
         List<Address> addresses = new ArrayList<>();
-        try{
+        try {
             String query = "SELECT * FROM Addresses WHERE UserID = " + userID;
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
 
-            while(resultSet.next()){
+            while (resultSet.next()) {
                 Address address = new Address();
                 address.setAddressID(resultSet.getInt(1));
                 address.setUserID(resultSet.getInt(2));
-                address.setAddress(resultSet.getString(3),resultSet.getString(4),resultSet.getString(5),resultSet.getString(6));
+                address.setAddress(resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), resultSet.getString(6));
 
                 addresses.add(address);
             }
@@ -318,8 +318,7 @@ public class DataAdapter {
             statement.close();
 
             return true; // save successfully!
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             System.out.println("Database access error!");
             e.printStackTrace();
             return false; // cannot save!
@@ -344,8 +343,7 @@ public class DataAdapter {
                 statement.setDouble(5, ticket.getPrice());
                 statement.setString(6, ticket.getTicketType());
                 statement.setInt(7, ticket.getTicketID());
-            }
-            else { // this ticket does not exist, use insert into
+            } else { // this ticket does not exist, use insert into
                 statement = connection.prepareStatement("INSERT INTO Tickets (EventID, UserID, TicketStatus, SeatNumber, Price, TicketType) VALUES (?, ?, ?, ?, ?, ?)");
                 statement.setInt(1, ticket.getEventID());
                 statement.setInt(2, ticket.getUserID());
@@ -433,5 +431,27 @@ public class DataAdapter {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean saveUser(User newUser) {
+        System.out.println("Saving user: " + newUser);
+        try {
+            //randomly generates a unique userID
+            newUser.setUserID((int) (Math.random() * 1000000));
+            System.out.println("New user ID: " + newUser.getUserID());
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO Users (UserID, UserName, Password, DisplayName) VALUES (?, ?, ?, ?)");
+            statement.setInt(1, newUser.getUserID());
+            statement.setString(2, newUser.getUsername());
+            statement.setString(3, newUser.getPassword());
+            statement.setString(4, newUser.getFullName());
+            statement.execute();
+            statement.close();
+
+            return true; // save successfully!
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+        return false;
     }
 }

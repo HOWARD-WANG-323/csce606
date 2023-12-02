@@ -61,3 +61,44 @@ document.getElementById('login-button').addEventListener('click', function(event
 });
 
 
+document.getElementById('sign-up-btn').addEventListener('click', function(event) {
+	event.preventDefault();  // 防止表单默认提交行为
+
+	var name = document.querySelector('.signup .input[type="text"]').value;
+	var email = document.querySelector('.signup .input[type="email"]').value;
+	var password = document.querySelector('.signup .input[type="password"]').value;
+
+	// 检查输入是否为空
+	if (!name.trim() || !email.trim() || !password.trim()) {
+		alert('All fields (name, email, and password) are required.');
+		return;
+	}
+
+	// 构造请求的 URL 和数据
+	var url = 'http://localhost:8080/signup';  // 修改为正确的注册路径
+	var data = {
+		name: name,
+		email: email,
+		password: password
+	};
+
+	// 发送 POST 请求到服务器
+	fetch(url, {
+		method: 'POST',
+		credentials: 'include',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(data)
+	})
+		.then(response => response.json())
+		.then(data => {
+			if (data && data.userID) {
+				alert('Registered successfully. Welcome ' + data.fullName + '!');
+				//window.location.href = '../homepage/index.html';
+			} else {
+				alert('Registration failed: ' + (data.message || 'Unknown error'));
+			}
+		})
+		.catch(error => console.error('Error:', error));
+});

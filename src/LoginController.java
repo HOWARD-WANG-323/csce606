@@ -9,6 +9,7 @@ public class LoginController implements ActionListener {
     public LoginController(LoginScreen loginScreen) {
         this.loginScreen = loginScreen;
         this.loginScreen.getBtnLogin().addActionListener(this);
+        this.loginScreen.getBtnSignUp().addActionListener(this);
     }
 
     @Override
@@ -29,14 +30,47 @@ public class LoginController implements ActionListener {
                 Application.getInstance().getMainScreen().logined();
                 Application.getInstance().getMainScreen().setVisible(true);
             }
-        }
+        } else if (e.getSource() == loginScreen.getBtnSignUp()) {
+                JTextField txtUsername = new JTextField();
+                JPasswordField txtPassword = new JPasswordField();
+                JTextField txtFullName = new JTextField();
+
+                Object[] message = {
+                        "Username/Email:", txtUsername,
+                        "Password:", txtPassword,
+                        "Full Name:", txtFullName
+                };
+
+                int option = JOptionPane.showConfirmDialog(null, message, "Register", JOptionPane.OK_CANCEL_OPTION);
+                if (option == JOptionPane.OK_OPTION) {
+                    String username = txtUsername.getText().trim();
+                    String password = new String(txtPassword.getPassword()).trim();
+                    String fullName = txtFullName.getText().trim();
+
+                    System.out.println("Register with username = " + username + " and password = " + password + " and full name = " + fullName);
+                    // 这里需要实现逻辑来创建新用户并保存到数据库
+                    User newUser = new User(username, password, fullName);
+                    boolean result = Application.getInstance().getDataAdapter().saveUser(newUser);
+
+                    if (result) {
+                        JOptionPane.showMessageDialog(null, "Registration successful!");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Registration failed!");
+                    }
+                }
+            }
     }
 
     public static class LoginScreen extends JFrame {
         private JTextField txtUserName = new JTextField(10);
         JPasswordField txtPassword = new JPasswordField(10);
+
+        private  JButton btnSignUp = new JButton("Sign Up");
         private JButton    btnLogin    = new JButton("Login");
 
+        public JButton getBtnSignUp() {
+            return btnSignUp;
+        }
         public JButton getBtnLogin() {
             return btnLogin;
         }
@@ -87,7 +121,12 @@ public class LoginController implements ActionListener {
                     6, 6);       // xPad, yPad
 
             container.add(main);
-            container.add(btnLogin);
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonPanel.add(btnLogin);
+            buttonPanel.add(btnSignUp);
+
+            // 将按钮面板添加到容器中
+            container.add(buttonPanel);
 
             // Use GridBagConstraints to center the container JPanel in the window
             GridBagConstraints gbc = new GridBagConstraints();

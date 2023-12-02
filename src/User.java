@@ -5,6 +5,18 @@ public class User {
     private String fullName;
     private boolean isManager;
 
+    public User(String username, String password, String fullName) {
+        //randomly generate a user id that never repeats
+        this.userID = (int) (Math.random() * 1000000000);
+        this.username = username;
+        this.password = password;
+        this.fullName = fullName;
+    }
+
+    public User() {
+
+    }
+
     public int getUserID() {
         return userID;
     }
