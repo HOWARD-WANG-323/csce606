@@ -1,3 +1,4 @@
+import java.awt.*;
 import java.sql.*;
 
 public class Application {
@@ -73,8 +74,12 @@ public class Application {
     private AddressController addressController;
 
     private CardController cardController;
+    
+    private EventManager eventManager;
+    
+    private EventManagerView eventManagerView = new EventManagerView();
 
-    private Ticketing ticketing;
+    private Ticketing ticketing = new Ticketing();
 
     public TicketController getTicketController() {
         return ticketController;
@@ -134,6 +139,9 @@ public class Application {
         cardController = new CardController(cardView);
 
         loginController = new LoginController(loginScreen);
+        
+        eventManager = new EventManager(eventManagerView);
+        
     }
 
 
@@ -146,4 +154,11 @@ public class Application {
     }
 
 
+    public Component getEventManagerView() {
+        return eventManagerView;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
+    }
 }

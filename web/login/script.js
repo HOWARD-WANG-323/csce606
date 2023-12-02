@@ -44,7 +44,12 @@ document.getElementById('login-button').addEventListener('click', function(event
 		method: 'GET',
 		credentials: 'include'  // Ensure cookies are sent with the request
 	})
-		.then(response => response.json())  // Assuming the server returns a JSON response
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Login failed');
+			}
+			return response.json();
+		}) // Assuming the server returns a JSON response
 		.then(data => {
 			if (data && data.userID) {  // Assuming if the user exists, the server would return an object with a userID field
 				// Display the user's full name (you can adjust this as needed)
@@ -57,32 +62,31 @@ document.getElementById('login-button').addEventListener('click', function(event
 				alert('Login failed: Invalid username or password.');
 			}
 		})
-		.catch(error => console.error('Error:', error));
+		.catch(error => {console.error('Error:', error);
+		alert('Login failed: Invalid username or password.');
+		});
 });
 
 
 document.getElementById('sign-up-btn').addEventListener('click', function(event) {
-	event.preventDefault();  // 防止表单默认提交行为
+	event.preventDefault(); // 防止表单默认提交行为
 
 	var name = document.querySelector('.signup .input[type="text"]').value;
 	var email = document.querySelector('.signup .input[type="email"]').value;
 	var password = document.querySelector('.signup .input[type="password"]').value;
 
-	// 检查输入是否为空
 	if (!name.trim() || !email.trim() || !password.trim()) {
 		alert('All fields (name, email, and password) are required.');
 		return;
 	}
 
-	// 构造请求的 URL 和数据
-	var url = 'http://localhost:8080/signup';  // 修改为正确的注册路径
+	var url = 'http://localhost:8080/signup'; // 修改为正确的注册路径
 	var data = {
 		name: name,
 		email: email,
 		password: password
 	};
 
-	// 发送 POST 请求到服务器
 	fetch(url, {
 		method: 'POST',
 		credentials: 'include',
@@ -91,7 +95,12 @@ document.getElementById('sign-up-btn').addEventListener('click', function(event)
 		},
 		body: JSON.stringify(data)
 	})
-		.then(response => response.json())
+		.then(response => {
+			if (!response.ok) {
+				throw new Error('Registration failed');
+			}
+			return response.json();
+		})
 		.then(data => {
 			if (data && data.userID) {
 				alert('Registered successfully. Welcome ' + data.fullName + '!');
@@ -100,5 +109,9 @@ document.getElementById('sign-up-btn').addEventListener('click', function(event)
 				alert('Registration failed: ' + (data.message || 'Unknown error'));
 			}
 		})
-		.catch(error => console.error('Error:', error));
+		.catch(error => {
+			console.error('Error:', error);
+			alert('Registration failed: ' + (data.message || 'Unknown error'));
+		});
 });
+

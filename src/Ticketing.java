@@ -3,12 +3,13 @@ import java.awt.*;
 import java.util.List;
 
 public class Ticketing extends JFrame {
-    private JList<Ticket> ticketList;
-    private DefaultListModel<Ticket> ticketListModel;
+    private JList<Ticket> ticketList = new JList<>();
+    private DefaultListModel<Ticket> ticketListModel = new DefaultListModel<>();
     private JButton selectButton = new JButton("Select");
     private JButton returnButton = new JButton("Return to Event Selection");
     private JLabel lblTicketStatus = new JLabel();
 
+    public Ticketing(){}; // Default constructor
     public Ticketing(List<Ticket> tickets) {
         setTitle("Choose a Ticket");
         setSize(300, 200);

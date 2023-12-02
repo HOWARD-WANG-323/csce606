@@ -47,10 +47,17 @@ public class EventManagerView extends JFrame {
         this.getContentPane().add(panelEventLocation);
 
 
+        txtEventDescription.setLineWrap(true);
+        txtEventDescription.setWrapStyleWord(true);
+
+        // 将文本区放入滚动窗格
+        JScrollPane scrollPane = new JScrollPane(txtEventDescription);
+
         JPanel panelEventDescription = new JPanel();
         panelEventDescription.add(new JLabel("Event Description: "));
-        panelEventDescription.add(txtEventDescription);
+        panelEventDescription.add(scrollPane); // 添加滚动窗格而不是直接添加文本区
         this.getContentPane().add(panelEventDescription);
+
     }
 
     public JButton getBtnLoad() {
@@ -84,5 +91,7 @@ public class EventManagerView extends JFrame {
     public JTextArea getTxtEventDescription() {
         return txtEventDescription;
     }
+
+
 }
 

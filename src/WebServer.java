@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +92,11 @@ public class WebServer {
                         Map<String, String> paramMap = new HashMap<>();
                         for (String param : params) {
                             String[] keyValue = param.split("=");
-                            if (keyValue.length == 2) {  // 确保key和value都存在
-                                paramMap.put(keyValue[0], keyValue[1]);
+                            if (keyValue.length == 2) {
+                                // 解码 URL 编码的参数
+                                String key = URLDecoder.decode(keyValue[0], "UTF-8");
+                                String value = URLDecoder.decode(keyValue[1], "UTF-8");
+                                paramMap.put(key, value);
                             }
                         }
                         String username = paramMap.get("username");
@@ -107,18 +111,14 @@ public class WebServer {
                         if (user != null) {
                             String sessionId = UUID.randomUUID().toString();
                             sessions.put(sessionId, user);
-                            System.out.println("sessionId: " + sessionId);
                             String userData = gson.toJson(user);
-                            sendResponse(clientSocket, userData, "application/json",sessionId);
-                            System.out.println("user data: " + userData);
+                            sendResponse(clientSocket, userData, "application/json", sessionId);
                         } else {
                             sendResponse(clientSocket, "Invalid username or password.", "text/plain");
-                            return;
                         }
-
-
                     } catch (Exception e) {
-                        sendResponse(clientSocket, "Invalid request parameters.", "text/plain");
+                        e.printStackTrace();
+                        sendResponse(clientSocket, "Error processing request.", "text/plain");
                     }
                 }
                 else {

@@ -55,9 +55,7 @@ public class DataAdapter {
         return card;
     }
 
-//    public boolean saveTicket(Ticket ticket) {
-//        return true;
-//    }
+
 
     public boolean saveAddress(Address address) {
         boolean isSaved = false;
@@ -149,6 +147,7 @@ public class DataAdapter {
 
     public User loadUser(String username, String password) {
         try {
+            System.out.println("Loading user: " + username + " " + password);
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE UserName = ? AND Password = ?");
             statement.setString(1, username);
             statement.setString(2, password);
@@ -328,13 +327,12 @@ public class DataAdapter {
 
     public boolean saveTicket(Ticket ticket) {
         try {
-            // Check if the ticket already exists in the database
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tickets WHERE TicketID = ?");
             statement.setInt(1, ticket.getTicketID());
-
             ResultSet resultSet = statement.executeQuery();
 
-            if (resultSet.next()) { // this ticket exists, update its fields
+            if (resultSet.next()) {
+                // Ticket exists, update its fields
                 statement = connection.prepareStatement("UPDATE Tickets SET EventID = ?, UserID = ?, TicketStatus = ?, SeatNumber = ?, Price = ?, TicketType = ? WHERE TicketID = ?");
                 statement.setInt(1, ticket.getEventID());
                 statement.setInt(2, ticket.getUserID());
@@ -343,21 +341,23 @@ public class DataAdapter {
                 statement.setDouble(5, ticket.getPrice());
                 statement.setString(6, ticket.getTicketType());
                 statement.setInt(7, ticket.getTicketID());
-            } else { // this ticket does not exist, use insert into
-                statement = connection.prepareStatement("INSERT INTO Tickets (EventID, UserID, TicketStatus, SeatNumber, Price, TicketType) VALUES (?, ?, ?, ?, ?, ?)");
-                statement.setInt(1, ticket.getEventID());
-                statement.setInt(2, ticket.getUserID());
-                statement.setString(3, ticket.getTicketStatus());
-                statement.setString(4, ticket.getSeatNumber());
-                statement.setDouble(5, ticket.getPrice());
-                statement.setString(6, ticket.getTicketType());
+            } else {
+                // Ticket does not exist, insert a new record
+                statement = connection.prepareStatement("INSERT INTO Tickets (TicketID, EventID, UserID, TicketStatus, SeatNumber, Price, TicketType) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                statement.setInt(1, ticket.getTicketID());
+                statement.setInt(2, ticket.getEventID());
+                statement.setInt(3, ticket.getUserID());
+                statement.setString(4, ticket.getTicketStatus());
+                statement.setString(5, ticket.getSeatNumber());
+                statement.setDouble(6, ticket.getPrice());
+                statement.setString(7, ticket.getTicketType());
             }
-            statement.execute();
-            resultSet.close();
+            statement.executeUpdate();
             statement.close();
-            return true;        // save successfully
+            resultSet.close();
+            return true; // save successfully
 
-        } catch (SQLException e) {
+        }catch (SQLException e) {
             System.out.println("Database access error!");
             e.printStackTrace();
             return false; // cannot save!
@@ -453,5 +453,69 @@ public class DataAdapter {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean saveEvent(Event event) {
+        try {
+            // 检查事件是否已存在
+            String checkQuery = "SELECT * FROM Events WHERE EventID = ?";
+            PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
+            checkStmt.setInt(1, event.getEventID());
+            ResultSet resultSet = checkStmt.executeQuery();
+
+            if (resultSet.next()) {
+                // 事件已存在，执行更新操作
+                String updateQuery = "UPDATE Events SET EventName = ?, EventDate = ?, EventLocation = ?, EventDescription = ? WHERE EventID = ?";
+                PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
+                updateStmt.setString(1, event.getEventName());
+                updateStmt.setString(2, event.getEventDate());
+                updateStmt.setString(3, event.getEventLocation());
+                updateStmt.setString(4, event.getEventDescription());
+                updateStmt.setInt(5, event.getEventID());
+                updateStmt.executeUpdate();
+                updateStmt.close();
+            } else {
+                // 事件不存在，执行插入操作
+                String insertQuery = "INSERT INTO Events (EventID, EventName, EventDate, EventLocation, EventDescription) VALUES (?, ?, ?, ?, ?)";
+                PreparedStatement insertStmt = connection.prepareStatement(insertQuery);
+                insertStmt.setInt(1, event.getEventID());
+                insertStmt.setString(2, event.getEventName());
+                insertStmt.setString(3, event.getEventDate());
+                insertStmt.setString(4, event.getEventLocation());
+                insertStmt.setString(5, event.getEventDescription());
+                insertStmt.executeUpdate();
+                insertStmt.close();
+            }
+
+            resultSet.close();
+            checkStmt.close();
+            return true; // 操作成功
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+            return false; // 操作失败
+        }
+    }
+
+    public void deleteEvent(Event event) {
+        String query = "DELETE FROM Events WHERE EventID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, event.getEventID());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteTicket(Ticket ticket) {
+        String query = "DELETE FROM Tickets WHERE TicketID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, ticket.getTicketID());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.out.println("Database access error!");
+            e.printStackTrace();
+        }
     }
 }

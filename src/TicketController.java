@@ -10,14 +10,16 @@ public class TicketController implements ActionListener {
         this.ticketView = ticketView;
         ticketView.getBtnLoad().addActionListener(this);
         ticketView.getBtnSave().addActionListener(this);
+        ticketView.getBtnDelete().addActionListener(this);
     }
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == ticketView.getBtnLoad()){
             loadTicket();}
-        else
-        if (e.getSource() == ticketView.getBtnSave())
+        else if (e.getSource() == ticketView.getBtnSave())
             saveTicket();
+        else if (e.getSource() == ticketView.getBtnDelete())
+            deleteTicket();
     }
 
     private void saveTicket() {
@@ -29,6 +31,7 @@ public class TicketController implements ActionListener {
         ticket.setPrice(Double.parseDouble(ticketView.getTxtTicketPrice().getText()));
         ticket.setTicketType(ticketView.getTxtTicketType().getText());
 
+        System.out.println(ticket.getTicketID());
         DataAdapter dataAdapter = Application.getInstance().getDataAdapter();
         if (dataAdapter.saveTicket(ticket)) {
             List<Ticket> updatedTickets = Application.getInstance().getDataAdapter().loadTicketsByEventId(ticket.getEventID());
@@ -55,6 +58,22 @@ public class TicketController implements ActionListener {
         }
     }
 
+    private void deleteTicket() {
+        // 实现删除的逻辑
+        // 使用 ticketView 获取用户输入
+        // 以ticketID作为删除的依据
+        int ticketID = Integer.parseInt(ticketView.getTxtTicketID().getText());
+        Ticket ticket = Application.getInstance().getDataAdapter().loadTicket(ticketID);
+        if (ticket == null) {
+            JOptionPane.showMessageDialog(null, "This ticket does not exist!");
+        }
+        else {
+            Application.getInstance().getDataAdapter().deleteTicket(ticket);
+            JOptionPane.showMessageDialog(null, "Ticket is deleted successfully!");
+        }
+
+    }
+
 
     public static class TicketView extends JFrame {
         private JTextField txtTicketID = new JTextField(10);
@@ -66,6 +85,8 @@ public class TicketController implements ActionListener {
         private JButton btnLoad = new JButton("Load Ticket");
         private JButton btnSave = new JButton("Save Ticket");
 
+        private JButton btnDelete = new JButton("Delete Ticket");
+
         public TicketView() {
             this.setTitle("Manage Tickets");
             this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
@@ -74,6 +95,7 @@ public class TicketController implements ActionListener {
             JPanel panelButton = new JPanel();
             panelButton.add(btnLoad);
             panelButton.add(btnSave);
+            panelButton.add(btnDelete);
             this.getContentPane().add(panelButton);
 
             JPanel panelTicketID = new JPanel();
@@ -111,6 +133,9 @@ public class TicketController implements ActionListener {
         public JButton getBtnSave() {
             return btnSave;
         }
+        public JButton getBtnDelete() {
+            return btnDelete;
+        }
 
         public JTextField getTxtTicketID() {
             return txtTicketID;
@@ -131,6 +156,7 @@ public class TicketController implements ActionListener {
         public JTextField getTxtTicketType() {
             return txtTicketType;
         }
+
 
 
     }
