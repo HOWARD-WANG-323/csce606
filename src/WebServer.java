@@ -74,6 +74,19 @@ public class WebServer {
                     String addressData = gson.toJson(addressList);
                     sendResponse(clientSocket, addressData, "application/json");
                 }else if (apiPath.matches("/getUserName")) {
+                    //debug
+                    for (Map.Entry<String, User> entry : sessions.entrySet()) {
+                        String sessionId = entry.getKey();
+                        User user = entry.getValue();
+
+                        System.out.println("Session ID: " + sessionId);
+                        System.out.println("User ID: " + user.getUserID());
+                        System.out.println("Username: " + user.getUsername());
+                        System.out.println("Password: " + user.getPassword()); // 注意：出于安全考虑，通常不建议打印密码
+                        System.out.println("Full Name: " + user.getFullName());
+                        System.out.println("----------------------------------");
+                    }
+
                     String sessionId = headers.get("Cookie").split("sessionId=")[1];
                     User user = sessions.get(sessionId);
                     if (user != null) {
@@ -85,6 +98,10 @@ public class WebServer {
                         errorData.put("error", "User not found");
                         sendResponse(clientSocket, gson.toJson(errorData), "application/json");
                     }
+                } else if (apiPath.equals("/signout")) {
+                    String sessionId = headers.get("Cookie").split("sessionId=")[1];
+                    sessions.remove(sessionId); // 从 sessions Map 中移除会话
+                    sendResponse(clientSocket, "Logged out successfully", "text/plain");
                 }
                 else if (apiPath.startsWith("/user")) {
                     try {
@@ -181,7 +198,20 @@ public class WebServer {
         User user = Application.getInstance().getDataAdapter().loadUser(newUser.getUsername(),newUser.getPassword());
         return user == null;
     }
+    private static void sendSignOutResponse(Socket socket) throws Exception {
+        OutputStream out = socket.getOutputStream();
 
+        StringBuilder responseHeaders = new StringBuilder();
+        responseHeaders.append("HTTP/1.1 200 OK\r\n");
+        responseHeaders.append("Content-Type: text/plain\r\n");
+        responseHeaders.append("Set-Cookie: sessionId=; HttpOnly; SameSite=Strict; Max-Age=0\r\n"); // 清除客户端的 sessionId cookie
+        responseHeaders.append("\r\n");
+
+        out.write(responseHeaders.toString().getBytes("UTF-8"));
+        out.write("Signed out successfully".getBytes("UTF-8"));
+        out.flush();
+        out.close();
+    }
     private static void sendResponse(Socket socket, String responseBody, String contentType) throws Exception {
         sendResponse(socket, responseBody, contentType, null);
     }

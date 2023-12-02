@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Fetch all events
     fetchAllEvents();
+    const signOutButton = document.querySelector('.user-actions a[href="../login/login.html"]');
+    if (signOutButton) {
+        signOutButton.addEventListener('click', handleSignOut);
+    }
+
 
 });
 
@@ -120,3 +125,28 @@ function fetchAllEvents() {
         })
         .catch(error => console.error('Error:', error));
 }
+
+function handleSignOut() {
+    // 向服务器发送请求来清除会话
+    fetch('http://localhost:8080/signout', {
+        method: 'GET',
+        credentials: 'include' // 确保包含凭证（如cookies）
+    })
+        .then(response => {
+            if (response.ok) {
+                // 如果服务器响应成功，清除本地存储的用户信息
+                // （例如，删除保存在 localStorage 或 sessionStorage 中的信息）
+                //localStorage.removeItem('userSession'); // 例如
+                // 重定向到登录页面或更新页面状态
+                alert('Signed out successfully.')
+                window.location.href = '../login/login.html'; // 假设有一个名为 'login.html' 的登录页面
+            } else {
+                throw new Error('Failed to sign out');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error signing out');
+        });
+}
+

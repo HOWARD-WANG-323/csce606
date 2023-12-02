@@ -8,8 +8,12 @@
 <link href="https://fonts.googleapis.com/css?family=Cabin|Indie+Flower|Inknut+Antiqua|Lora|Ravi+Prakash" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"  />
 
-<div class="container">
+<div class="container px-4 py-5 mx-auto">
     <div class="welcome-message">Good <span id="time-period"></span>, <span id="user-fullname"></span></div>
+    <div class="user-actions">
+        <a href="../Payment/checkout.html" class="user-link">View Cart</a>
+        <a href="../login/login.html" class="user-link">Sign Out</a>
+    </div>
     <h1 class="upcomming">upcomming events</h1>
     <div class="event-list">
 
@@ -205,6 +209,21 @@
         font-size: 18px;
         line-height: 1.5;
         float: right;
+        margin-bottom: 15px;
+    }
+    .user-actions {
+        text-align: right;
+        padding-right: 20px;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .user-link {
+        display: inline;
+        margin-right: 10px;
+        text-decoration: underline;
+        color: #007bff;
+
     }
 
 

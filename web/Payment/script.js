@@ -186,7 +186,7 @@ checkOutBtn.addEventListener('click', (e) => {
     let zipCode = document.getElementById('zip').value;
     let truncatedCard = cardNumber.slice(0, 6) + '*'.repeat(cardNumber.length - 10) + cardNumber.slice(-4);
     console.log("truncatedCard: ", truncatedCard);
-    let reciept = {
+    let receiept = {
         paymentID: null,
         customerName: cardHolderName,
         paymentDateTime:null,
@@ -195,7 +195,7 @@ checkOutBtn.addEventListener('click', (e) => {
         deliveryAddress: street +", " + city + ", " + state+ ", " + zipCode,
         ticketDetails: [],
     }
-    reciept.truncatedCardNumber = truncatedCard;
+    receiept.truncatedCardNumber = truncatedCard;
     if ( !isAddressValid(street, city, state, zipCode) || !isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr)){
         return;
     }
@@ -227,7 +227,7 @@ checkOutBtn.addEventListener('click', (e) => {
                 .then(response => response.text())
                 .then(data=>{
                     console.log(data);
-                    reciept.ticketDetails.push(data);
+                    receiept.ticketDetails.push(data);
                 })
         });
         let payment = {
@@ -238,8 +238,8 @@ checkOutBtn.addEventListener('click', (e) => {
             "userID": null,
             "paymentAmount": totalPrice,
         }
-        reciept.paymentAmount = totalPrice;
-        reciept.paymentDateTime = paymentDate;
+        receiept.paymentAmount = totalPrice;
+        receiept.paymentDateTime = paymentDate;
         fetch(`http://localhost:8080/payment/`, {
             method: 'POST',
             credentials: 'include',
@@ -248,9 +248,8 @@ checkOutBtn.addEventListener('click', (e) => {
             .then(response => response.text())
             .then(data => {
                 console.log(data);
-                reciept.paymentID = data;
-                alert('Successfully Paid!!!');
-                const blob = new Blob([JSON.stringify(reciept)], {type: 'text/plain;charset=utf-8'});
+                receiept.paymentID = data;
+                const blob = new Blob([JSON.stringify(receiept)], {type: 'text/plain;charset=utf-8'});
 
                 // 创建一个链接并将其指向 Blob
                 const a = document.createElement('a');
@@ -262,8 +261,12 @@ checkOutBtn.addEventListener('click', (e) => {
                 a.click();
                 document.body.removeChild(a);
 
+
                 // 释放 Blob URL
                 URL.revokeObjectURL(a.href);
+
+                localStorage.removeItem('selectedTickets');
+                alert('Successfully Paid!');
                 window.location.href = '../homepage/index.html';
             })
 

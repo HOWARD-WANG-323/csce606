@@ -8,7 +8,11 @@ body {
     background-color: #fff;
     background-repeat: no-repeat;
 }
-
+.return-home {
+    text-decoration: underline;
+    margin-right: 15px;
+    cursor: pointer;
+}
 .plus-minus {
     position: relative;
 }
