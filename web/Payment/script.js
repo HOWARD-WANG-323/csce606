@@ -238,7 +238,13 @@ checkOutBtn.addEventListener('click', (e) => {
             "paymentDate": paymentDate,
             "paymentStatus": "PAID",
             "card": {
-                "cardNumber": cardNumber
+                "cardID": null,
+                "userID": null,
+                "card": null,
+                "cardNumber": cardNumber,
+                "expiryDate": null,
+                "cvv": null, // Do not store CVV in a real-world application
+                "cardHolderName": null,
             },
             "userID": null,
             "paymentAmount": totalPrice,

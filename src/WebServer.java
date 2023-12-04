@@ -177,8 +177,7 @@ public class WebServer {
                     String sessionId = headers.get("Cookie").split("sessionId=")[1];
                     User user = sessions.get(sessionId);
                     payment.setUserID(user.getUserID());
-                    Application.getInstance().getDataAdapter().savePayment(payment);
-                    String paymentID = Integer.toString(Application.getInstance().getDataAdapter().getMaxPaymentID());
+                    String paymentID = Application.getInstance().getDataAdapter().savePayment(payment);
                     sendResponse(clientSocket, paymentID, "text/plain");
                 }
 

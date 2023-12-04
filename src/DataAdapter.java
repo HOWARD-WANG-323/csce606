@@ -4,6 +4,8 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.params.ScanParams;
+import redis.clients.jedis.resps.ScanResult;
 
 import java.sql.*;
 import java.util.*;
@@ -24,7 +26,7 @@ public class DataAdapter {
         String connectionString = "mongodb+srv://howardwzh323:wzh2023@cluster0.6vcds8r.mongodb.net/?retryWrites=true&w=majority";
         MongoClient mongoClient = MongoClients.create(connectionString);
         // 选择数据库和集合
-        this.database = mongoClient.getDatabase("StoreApp");
+        this.database = mongoClient.getDatabase("TicketMaster");
 
         String redisHost = "redis-10173.c241.us-east-1-4.ec2.cloud.redislabs.com";
         int redisPort = 10173;
@@ -143,7 +145,9 @@ public class DataAdapter {
         List<Event> events = new ArrayList<>();
         System.out.println("invoke load all event");
         try {
-            List<String> eventIDs = jedis2.lrange("event:*", 0, -1);
+
+
+            List<String> eventIDs = jedis2.lrange("events:", 0, -1);
             System.out.println(eventIDs);
 
             for (String eventID : eventIDs) {
@@ -241,7 +245,7 @@ public class DataAdapter {
         return null;
     }
 
-    public boolean savePayment(Payment payment) {
+    public String savePayment(Payment payment) {
         try {
             Gson gson = new Gson();
             long timestamp = System.currentTimeMillis();
@@ -250,7 +254,8 @@ public class DataAdapter {
             payment.setPaymentID(Integer.parseInt(orderNumber));
             Document paymentDoc = Document.parse(gson.toJson(payment));
             Card tempCard = payment.getCreditCard();
-            String cardJson = jedis.hget("cardNum_to_id",tempCard.getCardNumber());
+            String cardID = jedis.hget("cardNum_to_id",tempCard.getCardNumber());
+            String cardJson = jedis.get("card:"+cardID);
             Card card = new Gson().fromJson(cardJson, Card.class);
             payment.setCreditCard(card);
 
@@ -261,11 +266,12 @@ public class DataAdapter {
             // 准备订单行作为嵌入式文档
 
             database.getCollection("Orders").insertOne(paymentDoc);
-            return true;
+            System.out.println("finish inserting");
+            return String.valueOf(payment.getPaymentID());
         } catch (Exception e) {
             System.out.println("Error accessing MongoDB!");
             e.printStackTrace();
-            return false;
+            return null;
         }
 //        try {
 //            PreparedStatement statement = connection.prepareStatement("INSERT INTO Payments (UserID, PaymentAmount, PaymentDate, PaymentStatus) VALUES (?, ?, ?, ?)");
@@ -312,6 +318,7 @@ public class DataAdapter {
             }
             String ticketJson = gson.toJson(ticket);
             jedis2.set("ticket:" + ticket.getTicketID(), ticketJson);
+
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
@@ -406,6 +413,7 @@ public class DataAdapter {
             }
             String eventJson = gson.toJson(event);
             jedis2.set("event:" + event.getEventID(), eventJson);
+            jedis2.rpush("events:" , String.valueOf(event.getEventID()));
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");

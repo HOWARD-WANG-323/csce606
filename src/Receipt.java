@@ -18,7 +18,7 @@ public class Receipt {
 
     public void generateAndSaveReceipt(Payment payment) {
         // Fill in the receipt information
-        this.paymentID = Application.getInstance().getDataAdapter().getMaxPaymentID();
+        this.paymentID = payment.getPaymentID();
         this.customerName = payment.getCustomerInfo();  // Assuming Payment has a method getCustomerInfo()
         this.paymentDateTime = payment.getPaymentDate();
         this.paymentAmount = payment.getPaymentAmount();
