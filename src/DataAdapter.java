@@ -252,13 +252,14 @@ public class DataAdapter {
             int randomPart = new Random().nextInt(100); // 生成一个0到99的随机数
             String orderNumber = String.valueOf(timestamp).substring(String.valueOf(timestamp).length() - 4) + String.format("%02d", randomPart);
             payment.setPaymentID(Integer.parseInt(orderNumber));
-            Document paymentDoc = Document.parse(gson.toJson(payment));
             Card tempCard = payment.getCreditCard();
+            System.out.println("cardNum"+tempCard.getCardNumber());
             String cardID = jedis.hget("cardNum_to_id",tempCard.getCardNumber());
-            String cardJson = jedis.get("card:"+cardID);
+            String cardJson = jedis.get(cardID);
+            System.out.println("cardJson"+cardJson);
             Card card = new Gson().fromJson(cardJson, Card.class);
             payment.setCreditCard(card);
-
+            Document paymentDoc = Document.parse(gson.toJson(payment));
             // 生成当前日期时间，并存储为 BSON 日期时间格式
             java.util.Date now = new Date();
             paymentDoc.put("PaymentDate", now);

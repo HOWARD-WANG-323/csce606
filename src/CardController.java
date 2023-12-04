@@ -6,6 +6,7 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 public class CardController implements ActionListener {
     private CardView cardView;
+    private int cardNum = -1;
 
     public CardController(CardView cardView) {
         this.cardView = cardView;
@@ -24,6 +25,7 @@ public class CardController implements ActionListener {
     }
     private void manageSavedCard() {
         try {
+            cardNum = -1;
             int userID = Application.getInstance().getCurrentUser().getUserID();
             List<Card> cards = Application.getInstance().getDataAdapter().loadCardsByUserID(userID);
 
@@ -42,6 +44,7 @@ public class CardController implements ActionListener {
             selectButton.addActionListener(e -> {
                 Card selectedCard = cardList.getSelectedValue();
                 if (selectedCard != null) {
+                    this.cardNum = selectedCard.getCardID();
                     cardView.getCardNumber().setText(selectedCard.getCardNumber());
                     cardView.getCardHolderName().setText(selectedCard.getCardHolderName());
                     cardView.getExpirationDate().setText(selectedCard.getExpiryDate());
@@ -80,6 +83,9 @@ public class CardController implements ActionListener {
     }
     private void applyCard() {
         Card card = new Card();
+        if(this.cardNum != -1){
+            card.setCardID(this.cardNum);
+        }
         card.setCardNumber(cardView.getCardNumber().getText().trim());
         card.setCardHolderName(cardView.getCardHolderName().getText().trim());
         card.setExpirationDate(cardView.getExpirationDate().getText().trim());
@@ -109,6 +115,7 @@ public class CardController implements ActionListener {
         Application.getInstance().getPayController().setCurrentCard(card);
         Application.getInstance().getPaymentView().updateCurrentCardLabel(card);
         JOptionPane.showMessageDialog(null, "Card Applied!");
+        this.cardNum = -1;
     }
 
 

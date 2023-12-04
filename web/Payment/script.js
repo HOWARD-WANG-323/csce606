@@ -193,7 +193,7 @@ checkOutBtn.addEventListener('click', (e) => {
         "paymentAmount":null,
         "truncatedCardNumber" : null,
         "deliveryAddress": street +", " + city + ", " + state+ ", " + zipCode,
-        "ticketDetails": [],
+        "ticketDetails": "",
     }
     receiept.truncatedCardNumber = truncatedCard;
     if ( !isAddressValid(street, city, state, zipCode) || !isCreditCardValid(cardNumber,cardHolderName,dateStr,cvvStr)){
@@ -209,6 +209,7 @@ checkOutBtn.addEventListener('click', (e) => {
             document.getElementById('cart-placeholder').style.display = 'block';
             return;
         }
+        let promises = [];
 
         ticketsArray.forEach(ticketID => {
             let data = {
@@ -219,67 +220,73 @@ checkOutBtn.addEventListener('click', (e) => {
                 "price": null,
                 "userID": null
             }
-            fetch(`http://localhost:8080/ticket/`, {
+            let promise = fetch(`http://localhost:8080/ticket/`, {
                 method: 'POST',
                 credentials: 'include',
                 body: JSON.stringify(data),
             })
                 .then(response => response.text())
                 .then(data=>{
-                    console.log(data);
-                    receiept.ticketDetails.push(data);
+                    receiept.ticketDetails = receiept.ticketDetails + '\n' + data;
+                })
+            promises.push(promise)
+        });
+
+        Promise.all(promises).then(results => {
+            // 所有请求都完成后的处理
+            results.forEach(data => {
+                console.log(data); // 输出每个请求的结果
+            });
+            receiept.paymentAmount = totalPrice;
+            receiept.paymentDateTime = paymentDate;
+            let string
+            let payment = {
+                "paymentID": null,
+                "paymentDate": paymentDate,
+                "paymentStatus": "PAID",
+                "card": {
+                    "cardID": null,
+                    "userID": null,
+                    "card": null,
+                    "cardNumber": cardNumber,
+                    "expiryDate": null,
+                    "cvv": null, // Do not store CVV in a real-world application
+                    "cardHolderName": null,
+                },
+                "userID": null,
+                "paymentAmount": totalPrice,
+                "receipt": receiept,
+            }
+            fetch(`http://localhost:8080/payment/`, {
+                method: 'POST',
+                credentials: 'include',
+                body: JSON.stringify(payment),
+            })
+                .then(response => response.text())
+                .then(data => {
+                    // console.log(data);
+                    // receiept.paymentID = data;
+                    // const blob = new Blob([JSON.stringify(receiept)], {type: 'text/plain;charset=utf-8'});
+                    //
+                    // // 创建一个链接并将其指向 Blob
+                    // const a = document.createElement('a');
+                    // a.href = URL.createObjectURL(blob);
+                    // a.download = "reciept.txt";
+                    //
+                    // // 将链接添加到页面并触发点击，然后移除链接
+                    // document.body.appendChild(a);
+                    // a.click();
+                    // document.body.removeChild(a);
+                    //
+                    //
+                    // // 释放 Blob URL
+                    // URL.revokeObjectURL(a.href);
+
+                    localStorage.removeItem('selectedTickets');
+                    alert('Successfully Paid!');
+                    window.location.href = '../homepage/index.html';
                 })
         });
-        receiept.paymentAmount = totalPrice;
-        receiept.paymentDateTime = paymentDate;
-        receiept.ticketDetails = JSON.stringify(receiept.ticketDetails); //把列表转成string
-        let payment = {
-            "paymentID": null,
-            "paymentDate": paymentDate,
-            "paymentStatus": "PAID",
-            "card": {
-                "cardID": null,
-                "userID": null,
-                "card": null,
-                "cardNumber": cardNumber,
-                "expiryDate": null,
-                "cvv": null, // Do not store CVV in a real-world application
-                "cardHolderName": null,
-            },
-            "userID": null,
-            "paymentAmount": totalPrice,
-            "receipt": receiept,
-        }
-        fetch(`http://localhost:8080/payment/`, {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify(payment),
-        })
-            .then(response => response.text())
-            .then(data => {
-                // console.log(data);
-                // receiept.paymentID = data;
-                // const blob = new Blob([JSON.stringify(receiept)], {type: 'text/plain;charset=utf-8'});
-                //
-                // // 创建一个链接并将其指向 Blob
-                // const a = document.createElement('a');
-                // a.href = URL.createObjectURL(blob);
-                // a.download = "reciept.txt";
-                //
-                // // 将链接添加到页面并触发点击，然后移除链接
-                // document.body.appendChild(a);
-                // a.click();
-                // document.body.removeChild(a);
-                //
-                //
-                // // 释放 Blob URL
-                // URL.revokeObjectURL(a.href);
-
-                localStorage.removeItem('selectedTickets');
-                alert('Successfully Paid!');
-                window.location.href = '../homepage/index.html';
-            })
-
 });
 
 document.addEventListener('DOMContentLoaded', function() {

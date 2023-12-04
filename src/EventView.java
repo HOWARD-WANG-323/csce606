@@ -15,7 +15,6 @@ public class EventView extends JFrame {
         for (Event event : events) {
             eventListModel.addElement(event);
         }
-
         eventList = new JList<>(eventListModel);
         eventList.setCellRenderer(new EventCellRenderer()); // set the custom renderer
         JScrollPane scrollPane = new JScrollPane(eventList);

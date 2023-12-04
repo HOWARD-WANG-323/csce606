@@ -7,6 +7,7 @@ import javax.swing.DefaultListModel;
 
 public class AddressController implements ActionListener {
     private AddressView addressView;
+    private int addressID = -1;
 
     public AddressController(AddressView addressView) {
         this.addressView = addressView;
@@ -44,6 +45,7 @@ public class AddressController implements ActionListener {
             selectButton.addActionListener(e -> {
                 Address selectedAddress = addressList.getSelectedValue();
                 if (selectedAddress != null) {
+                    this.addressID = selectedAddress.getAddressID();
                     addressView.getStreet().setText(selectedAddress.getStreet());
                     addressView.getCity().setText(selectedAddress.getCity());
                     addressView.getStates().setText(selectedAddress.getState());
@@ -83,7 +85,9 @@ public class AddressController implements ActionListener {
 
     private void applyAddress() {
         Address address = new Address();
-
+        if(this.addressID != -1){
+            address.setAddressID(this.addressID);
+        }
         address.setAddress(addressView.getStreet().getText().trim(),
                 addressView.getCity().getText().trim(),
                 addressView.getStates().getText().trim(),
@@ -105,6 +109,7 @@ public class AddressController implements ActionListener {
         Application.getInstance().getPayController().setCurrentAddress(address);
         Application.getInstance().getPaymentView().updateCurrentAddressLabel(address);
         JOptionPane.showMessageDialog(null, "Address Applied!");
+        this.addressID = -1;
     }
     private boolean isAddressValid(Address address) {
         try {
