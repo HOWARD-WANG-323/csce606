@@ -2,12 +2,12 @@ import com.google.gson.Gson;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 import redis.clients.jedis.Jedis;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 public class DataAdapter {
@@ -17,8 +17,9 @@ public class DataAdapter {
 
     private Jedis jedis;
 
-    public DataAdapter(Connection connection) {
-        this.connection = connection;
+    private Jedis jedis2;
+
+    public DataAdapter() {
 
         String connectionString = "mongodb+srv://howardwzh323:wzh2023@cluster0.6vcds8r.mongodb.net/?retryWrites=true&w=majority";
         MongoClient mongoClient = MongoClients.create(connectionString);
@@ -33,9 +34,10 @@ public class DataAdapter {
         jedis = new Jedis(redisHost, redisPort);
         jedis.auth(redisPassword);
         jedis.set("username = admin", "password");
+
+        // jedis2 is for ticket-event management
+        jedis2 = new Jedis("redis://default:alex0606@redis-11283.c16.us-east-1-3.ec2.cloud.redislabs.com:11283");
     }
-
-
 
 
     public boolean saveAddress(Address address) {
@@ -107,6 +109,7 @@ public class DataAdapter {
             String cardJson = gson.toJson(card);
             // 保存或更新卡片信息
             jedis.set("card:" + card.getCardID(), cardJson);
+            jedis.hset("cardNum_to_id", card.getCardNumber(), "card:" + card.getCardID());
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
@@ -138,11 +141,13 @@ public class DataAdapter {
 
     public List<Event> loadAllEvents() {
         List<Event> events = new ArrayList<>();
+        System.out.println("invoke load all event");
         try {
-            List<String> eventIDs = jedis.lrange("event:", 0, -1);
+            List<String> eventIDs = jedis2.lrange("event:*", 0, -1);
+            System.out.println(eventIDs);
 
             for (String eventID : eventIDs) {
-                String eventJson = jedis.get("event:" + eventID);
+                String eventJson = jedis2.get("event:" + eventID);
                 if (eventJson != null) {  // Check if the card data is not null
                     events.add(new Gson().fromJson(eventJson, Event.class));
                 }
@@ -159,9 +164,9 @@ public class DataAdapter {
         List<Ticket> tickets = new ArrayList<>();
 
         try {
-            List<String> ticketIDs = jedis.lrange("eventTickets:" + eventId, 0, -1);
+            List<String> ticketIDs = jedis2.lrange("eventTickets:" + eventId, 0, -1);
             for (String ticketID : ticketIDs) {
-                String ticketJson = jedis.get("ticket:" + ticketID);
+                String ticketJson = jedis2.get("ticket:" + ticketID);
                 if (ticketJson != null) {  // Check if the card data is not null
                     tickets.add(new Gson().fromJson(ticketJson, Ticket.class));
                 }
@@ -238,22 +243,47 @@ public class DataAdapter {
 
     public boolean savePayment(Payment payment) {
         try {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO Payments (UserID, PaymentAmount, PaymentDate, PaymentStatus) VALUES (?, ?, ?, ?)");
+            Gson gson = new Gson();
+            long timestamp = System.currentTimeMillis();
+            int randomPart = new Random().nextInt(100); // 生成一个0到99的随机数
+            String orderNumber = String.valueOf(timestamp).substring(String.valueOf(timestamp).length() - 4) + String.format("%02d", randomPart);
+            payment.setPaymentID(Integer.parseInt(orderNumber));
+            Document paymentDoc = Document.parse(gson.toJson(payment));
+            Card tempCard = payment.getCreditCard();
+            String cardJson = jedis.hget("cardNum_to_id",tempCard.getCardNumber());
+            Card card = new Gson().fromJson(cardJson, Card.class);
+            payment.setCreditCard(card);
 
-            statement.setInt(1, payment.getUserID());
-            statement.setDouble(2, payment.getPaymentAmount());
-            statement.setString(3, payment.getPaymentDate());
-            statement.setString(4, payment.getPaymentStatus());
+            // 生成当前日期时间，并存储为 BSON 日期时间格式
+            java.util.Date now = new Date();
+            paymentDoc.put("PaymentDate", now);
 
-            statement.execute();    // commit to the database;
-            statement.close();
+            // 准备订单行作为嵌入式文档
 
-            return true; // save successfully!
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            database.getCollection("Orders").insertOne(paymentDoc);
+            return true;
+        } catch (Exception e) {
+            System.out.println("Error accessing MongoDB!");
             e.printStackTrace();
-            return false; // cannot save!
+            return false;
         }
+//        try {
+//            PreparedStatement statement = connection.prepareStatement("INSERT INTO Payments (UserID, PaymentAmount, PaymentDate, PaymentStatus) VALUES (?, ?, ?, ?)");
+//
+//            statement.setInt(1, payment.getUserID());
+//            statement.setDouble(2, payment.getPaymentAmount());
+//            statement.setString(3, payment.getPaymentDate());
+//            statement.setString(4, payment.getPaymentStatus());
+//
+//            statement.execute();    // commit to the database;
+//            statement.close();
+//
+//            return true; // save successfully!
+//        } catch (SQLException e) {
+//            System.out.println("Database access error!");
+//            e.printStackTrace();
+//            return false; // cannot save!
+//        }
     }
 
 
@@ -275,13 +305,13 @@ public class DataAdapter {
                 }
 
                 if (!ticketExists) {
-                    int newTicketId = Math.toIntExact(jedis.incr("ticketIDCounter"));
+                    int newTicketId = Math.toIntExact(jedis2.incr("ticketIDCounter"));
                     ticket.setTicketID(newTicketId);
-                    jedis.rpush("eventTickets:" + ticket.getEventID(), String.valueOf(newTicketId));
+                    jedis2.rpush("eventTickets:" + ticket.getEventID(), String.valueOf(newTicketId));
                 }
             }
             String ticketJson = gson.toJson(ticket);
-            jedis.set("ticket:" + ticket.getTicketID(), ticketJson);
+            jedis2.set("ticket:" + ticket.getTicketID(), ticketJson);
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
@@ -292,7 +322,7 @@ public class DataAdapter {
 
     public Event loadEvent(int eventID) {
         try {
-            String eventJson = jedis.get("event:" + eventID);
+            String eventJson = jedis2.get("event:" + eventID);
             Gson gson = new Gson();
             if (eventJson != null) {
                 return gson.fromJson(eventJson, Event.class);
@@ -323,7 +353,7 @@ public class DataAdapter {
 
     public Ticket loadTicket(int ticketID) {
         try {
-            String ticketJson = jedis.get("ticket:" + ticketID);
+            String ticketJson = jedis2.get("ticket:" + ticketID);
             Gson gson = new Gson();
             if (ticketJson != null) {
                 return gson.fromJson(ticketJson, Ticket.class);
@@ -340,12 +370,8 @@ public class DataAdapter {
         try {
             Gson gson = new Gson();
             int newID = (int) (Math.random() * 1000000);
-            String key = "user:" + newID;
-            while (jedis.exists(key)) { // 检查 key 是否存在
-                newID++; // 如果存在，newID 增加 1
-                key = "user:" + newID; // 更新 key 以匹配新的 newID
-            }
             newUser.setUserID(newID);
+            String key = "user:" + newUser.getUsername();
             String userJson = gson.toJson(newUser);
             jedis.set(key,userJson);
             isSaved = true;
@@ -374,12 +400,12 @@ public class DataAdapter {
                 }
 
                 if (!eventExists) {
-                    int newEventId = Math.toIntExact(jedis.incr("eventIDCounter"));
+                    int newEventId = Math.toIntExact(jedis2.incr("eventIDCounter"));
                     event.setEventID(newEventId);
                 }
             }
             String eventJson = gson.toJson(event);
-            jedis.set("event:" + event.getEventID(), eventJson);
+            jedis2.set("event:" + event.getEventID(), eventJson);
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
@@ -393,13 +419,13 @@ public class DataAdapter {
             // 从用户的卡列表中移除卡ID
             String pattern = "eventTickets:" + event.getEventID() + "*";
 
-            Set<String> keys = jedis.keys(pattern);
+            Set<String> keys = jedis2.keys(pattern);
             for (String key : keys) {
-                jedis.del(key);
+                jedis2.del(key);
             }
 
             // 删除卡数据
-            jedis.del("event:" + event.getEventID());
+            jedis2.del("event:" + event.getEventID());
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
             e.printStackTrace();
@@ -409,10 +435,10 @@ public class DataAdapter {
     public void deleteTicket(Ticket ticket) {
         try {
             // 从用户的卡列表中移除卡ID
-            jedis.lrem("eventTickets:" + ticket.getEventID(), 1, String.valueOf(ticket.getTicketID()));
+            jedis2.lrem("eventTickets:" + ticket.getEventID(), 1, String.valueOf(ticket.getTicketID()));
 
             // 删除卡数据
-            jedis.del("card:" + ticket.getTicketID());
+            jedis2.del("card:" + ticket.getTicketID());
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
             e.printStackTrace();

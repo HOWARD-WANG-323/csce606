@@ -169,9 +169,10 @@ public class ShoppingCartController implements ActionListener {
         //add payment to payment table
         payment.setPaymentStatus("PAID");
         payment.setPaymenAmount(calculateTotal());
-        dataAdapter.savePayment(payment);
         Receipt receipt = new Receipt();
         receipt.generateAndSaveReceipt(payment);
+        payment.setReceipt(receipt);
+        dataAdapter.savePayment(payment);
 
         JOptionPane.showMessageDialog(null, "Your order has been processed successfully!");
         //clear the cart

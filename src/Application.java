@@ -110,22 +110,10 @@ public class Application {
     private Application() {
         // create SQLite database connection here!
         try {
-            Class.forName("org.sqlite.JDBC");
-
-            String url = "jdbc:sqlite:store.db";
-
-            connection = DriverManager.getConnection(url);
-            dataAdapter = new DataAdapter(connection);
-
+            dataAdapter = new DataAdapter();
         }
-        catch (ClassNotFoundException ex) {
-            System.out.println("SQLite is not installed. System exits with error!");
-            ex.printStackTrace();
-            System.exit(1);
-        }
-
-        catch (SQLException ex) {
-            System.out.println("SQLite database is not ready. System exits with error!" + ex.getMessage());
+        catch (Exception ex) {
+            System.out.println(ex.getMessage());
 
             System.exit(2);
         }

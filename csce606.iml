@@ -20,7 +20,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/jedis-2.9.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/mongo-java-driver-3.9.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -29,7 +29,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/mongo-java-driver-3.9.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/jedis-5.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

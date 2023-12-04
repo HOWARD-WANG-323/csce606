@@ -8,9 +8,19 @@ public class Payment {
     private String paymentDate;
 
     private String paymentStatus;
-
     private Card card;
 
+    private Receipt receipt;
+
+
+
+    public void setReceipt(Receipt receipt){
+        this.receipt = receipt;
+        return;
+    }
+    public Receipt getReceipt(Receipt receipt){
+        return this.receipt;
+    }
     public String getPaymentStatus() {
         return paymentStatus;
     }
@@ -65,6 +75,7 @@ public class Payment {
     public void setCreditCard(Card card) {
         this.card = card;
     }
+
 
     public String getDeliveryAddress() {
         return Application.getInstance().getShopCartController().getCurrentAddress().getAddress();
