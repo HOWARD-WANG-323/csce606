@@ -177,8 +177,7 @@ public class WebServer {
                     String sessionId = headers.get("Cookie").split("sessionId=")[1];
                     User user = sessions.get(sessionId);
                     payment.setUserID(user.getUserID());
-                    Application.getInstance().getDataAdapter().savePayment(payment);
-                    String paymentID = Integer.toString(Application.getInstance().getDataAdapter().getMaxPaymentID());
+                    String paymentID = Application.getInstance().getDataAdapter().savePayment(payment);
                     sendResponse(clientSocket, paymentID, "text/plain");
                 }
 
@@ -222,7 +221,7 @@ public class WebServer {
         StringBuilder responseHeaders = new StringBuilder();
         responseHeaders.append("HTTP/1.1 200 OK\r\n");
         responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
-        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63343\r\n");
+        responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63342\r\n");
         responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
         responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
 

@@ -150,7 +150,6 @@ public class ShoppingCartController implements ActionListener {
         }
         //proceed to check out create payment, deduct quantities of the purchased products from product table, add payment to payment table
         //set payment id, max in database +1
-        int paymentID = Application.getInstance().getDataAdapter().getMaxPaymentID() + 1;
 
         String paymentDate = java.time.LocalDateTime.now().toString().replace("T", " ");
         payment.setPaymentDate(paymentDate);
@@ -169,9 +168,10 @@ public class ShoppingCartController implements ActionListener {
         //add payment to payment table
         payment.setPaymentStatus("PAID");
         payment.setPaymenAmount(calculateTotal());
-        dataAdapter.savePayment(payment);
         Receipt receipt = new Receipt();
         receipt.generateAndSaveReceipt(payment);
+        payment.setReceipt(receipt);
+        dataAdapter.savePayment(payment);
 
         JOptionPane.showMessageDialog(null, "Your order has been processed successfully!");
         //clear the cart
