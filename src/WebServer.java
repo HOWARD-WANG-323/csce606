@@ -180,8 +180,23 @@ public class WebServer {
                     String paymentID = Application.getInstance().getDataAdapter().savePayment(payment);
                     sendResponse(clientSocket, paymentID, "text/plain");
                 }
-
-
+                //save new user
+               else if("/signup/".equals(apiPath)){
+                   System.out.println("Received JSON Data: " + requestBody.toString());
+                   User newUser = gson.fromJson(requestBody.toString(), User.class);
+                   if(checkUserData(newUser)){
+                       Application.getInstance().getDataAdapter().saveUser(newUser);
+                       Map<String, String> successData = new HashMap<>();
+                       successData.put("message", "Registration successful");
+                       successData.put("userID", String.valueOf(newUser.getUserID())); // 假设你有一个方法来获取用户ID
+                       sendResponse(clientSocket, gson.toJson(successData), "application/json");
+                   }
+                   else{
+                       Map<String, String> errorData = new HashMap<>();
+                       errorData.put("error", "User already exists");
+                       sendResponse(clientSocket, gson.toJson(errorData), "application/json");
+                   }
+               }
             }
             else {
                 sendResponse(clientSocket, "Invalid request", "text/plain");
@@ -223,6 +238,7 @@ public class WebServer {
         responseHeaders.append("Content-Type: ").append(contentType).append("\r\n");
         responseHeaders.append("Access-Control-Allow-Origin: http://localhost:63342\r\n");
         responseHeaders.append("Access-Control-Allow-Credentials: true\r\n");
+        responseHeaders.append("Access-Control-Allow-Headers: Content-Type\r\n");  // 允许 Content-Type 请求头
         responseHeaders.append("Content-Length: ").append(responseBody.getBytes("UTF-8").length).append("\r\n");
 
         if (sessionId != null) {

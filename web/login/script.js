@@ -80,10 +80,10 @@ document.getElementById('sign-up-btn').addEventListener('click', function(event)
 		return;
 	}
 
-	var url = 'http://localhost:8080/signup'; // 修改为正确的注册路径
+	var url = 'http://localhost:8080/signup/'; // 修改为正确的注册路径
 	var data = {
-		name: name,
-		email: email,
+		fullName: name,
+		username: email,
 		password: password
 	};
 
@@ -99,19 +99,21 @@ document.getElementById('sign-up-btn').addEventListener('click', function(event)
 			if (!response.ok) {
 				throw new Error('Registration failed');
 			}
-			return response.json();
+			return response.json(); // 确保这里是 JSON
 		})
 		.then(data => {
-			if (data && data.userID) {
-				alert('Registered successfully. Welcome ' + data.fullName + '!');
-				//window.location.href = '../homepage/index.html';
+			if (data.error) {
+				// 处理错误情况
+				alert('Registration failed: ' + data.error);
 			} else {
-				alert('Registration failed: ' + (data.message || 'Unknown error'));
+				// 处理成功情况
+				alert('Registered successfully. Welcome ' + name + '!');
 			}
 		})
 		.catch(error => {
 			console.error('Error:', error);
-			alert('Registration failed: ' + (data.message || 'Unknown error'));
+			alert('Registration failed: ' + error.message);
 		});
+
 });
 

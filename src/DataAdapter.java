@@ -27,7 +27,7 @@ public class DataAdapter {
         MongoClient mongoClient = MongoClients.create(connectionString);
         // 选择数据库和集合
         this.database = mongoClient.getDatabase("TicketMaster");
-
+        // for user management
         String redisHost = "redis-10173.c241.us-east-1-4.ec2.cloud.redislabs.com";
         int redisPort = 10173;
         String redisPassword = "aa0eTYMtnMUSiRGxjpqgWiYjIKQZWY7E";

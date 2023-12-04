@@ -3,7 +3,6 @@ public class User {
     private String username;
     private String password;
     private String fullName;
-    private boolean isManager;
 
     public User(String username, String password, String fullName) {
         //randomly generate a user id that never repeats
