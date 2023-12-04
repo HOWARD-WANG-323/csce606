@@ -1,104 +1,76 @@
+import com.google.gson.Gson;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import redis.clients.jedis.Jedis;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DataAdapter {
     private Connection connection;
 
+    private MongoDatabase database;
+
+    private Jedis jedis;
+
     public DataAdapter(Connection connection) {
         this.connection = connection;
+
+        String connectionString = "mongodb+srv://howardwzh323:wzh2023@cluster0.6vcds8r.mongodb.net/?retryWrites=true&w=majority";
+        MongoClient mongoClient = MongoClients.create(connectionString);
+        // 选择数据库和集合
+        this.database = mongoClient.getDatabase("StoreApp");
+
+        String redisHost = "redis-10173.c241.us-east-1-4.ec2.cloud.redislabs.com";
+        int redisPort = 10173;
+        String redisPassword = "aa0eTYMtnMUSiRGxjpqgWiYjIKQZWY7E";
+
+        // Connecting to Redis
+        jedis = new Jedis(redisHost, redisPort);
+        jedis.auth(redisPassword);
+        jedis.set("username = admin", "password");
     }
 
-//    public Ticket loadTicket(int id) {
-//
-//    }
-
-    public Address loadAddress(int id) {
-        Address address = null;
-        String query = "SELECT * FROM Addresses WHERE UserID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    address = new Address();
-                    address.setAddressID(resultSet.getInt(1));
-                    address.setUserID(resultSet.getInt(2));
-                    address.setAddress(resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), resultSet.getString(6));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
-            e.printStackTrace();
-        }
-        return address;
-    }
-
-    public Card loadCard(int id) {
-        Card card = null;
-        String query = "SELECT * FROM Cards WHERE CardID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    card = new Card();
-                    card.setCardID(resultSet.getInt(1));
-                    card.setUserID(resultSet.getInt(2));
-                    card.setCardNumber(resultSet.getString(3));
-                    card.setCardHolderName(resultSet.getString(4));
-                    card.setExpirationDate(resultSet.getString(5));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
-            e.printStackTrace();
-        }
-        return card;
-    }
 
 
 
     public boolean saveAddress(Address address) {
         boolean isSaved = false;
         try {
-            String checkQuery = "SELECT * FROM Addresses WHERE AddressID = ?";
-            try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery)) {
-                checkStmt.setInt(1, address.getAddressID());
-                try (ResultSet resultSet = checkStmt.executeQuery()) {
-                    if (resultSet.next()) { // this address exists, update its fields
-                        String updateQuery = "UPDATE Addresses SET UserID = ?, Street = ?, City = ?, State = ?, Zip = ? WHERE AddressID = ?";
-                        try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
-                            updateStmt.setInt(1, address.getUserID());
-                            updateStmt.setString(2, address.getStreet());
-                            updateStmt.setString(3, address.getCity());
-                            updateStmt.setString(4, address.getState());
-                            updateStmt.setString(5, address.getPostalCode());
-                            updateStmt.setInt(6, address.getAddressID());
-                            updateStmt.executeUpdate();
-                            isSaved = true;
-                        }
-                    } else { // this address does not exist, use insert into
-                        String insertQuery = "INSERT INTO Addresses (UserID, Street, City, State, Zip) VALUES (?, ?, ?, ?, ?)";
-                        try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                            insertStmt.setInt(1, address.getUserID());
-                            insertStmt.setString(2, address.getStreet());
-                            insertStmt.setString(3, address.getCity());
-                            insertStmt.setString(4, address.getState());
-                            insertStmt.setString(5, address.getPostalCode());
-                            insertStmt.executeUpdate();
+            Gson gson = new Gson();
+            // 判断是否是新地址或更新现有地址
+            if (address.getAddressID() == 0) {
+                // 加载用户的现有地址
+                List<Address> existingAddresses = loadAddressesByUserID(address.getUserID());
 
-                            // Get the generated key (AddressID) if needed
-                            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
-                                if (generatedKeys.next()) {
-                                    address.setAddressID(generatedKeys.getInt(1));
-                                }
-                            }
-                            isSaved = true;
-                        }
+                // 检查是否已存在相同的地址
+                boolean addressExists = false;
+                for (Address existingAddress : existingAddresses) {
+                    if (existingAddress.equals(address)) { // 确保 Address 类实现了适当的 equals 方法
+                        // 如果地址已存在，则更新地址ID和信息
+                        address.setAddressID(existingAddress.getAddressID());
+                        addressExists = true;
+                        break;
                     }
                 }
+                // 如果是新地址，则生成新的 addressID 并添加到用户地址列表
+                if (!addressExists) {
+                    int newAddressId = Math.toIntExact(jedis.incr("addressIDCounter"));
+                    address.setAddressID(newAddressId);
+                    jedis.rpush("userAddresses:" + address.getUserID(), String.valueOf(newAddressId));
+                    isSaved =true;
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            String addressJson = gson.toJson(address);
+            // 保存或更新地址信息
+            jedis.set("address:" + address.getAddressID(), addressJson);
+            isSaved =true;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return isSaved;
@@ -108,37 +80,36 @@ public class DataAdapter {
     public boolean saveCard(Card card) {
         boolean isSaved = false;
         try {
-            String checkQuery = "SELECT * FROM Cards WHERE CardID = ?";
-            try (PreparedStatement checkStmt = connection.prepareStatement(checkQuery)) {
-                checkStmt.setInt(1, card.getCardID());
-                try (ResultSet resultSet = checkStmt.executeQuery()) {
-                    if (resultSet.next()) {
-                        String updateQuery = "UPDATE Cards SET UserID = ?, CardNumber = ?, CardHolder = ?, ExpDate = ? WHERE CardID = ?";
-                        try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
-                            updateStmt.setInt(1, card.getUserID());
-                            updateStmt.setString(2, card.getCardNumber());
-                            updateStmt.setString(3, card.getCardHolderName());
-                            updateStmt.setString(4, card.getExpiryDate());
-                            updateStmt.setInt(5, card.getCardID());
-                            updateStmt.executeUpdate();
-                            isSaved = true;
-                        }
-                    } else {
-                        String insertQuery = "INSERT INTO Cards VALUES (?, ?, ?, ?, ?)";
-                        try (PreparedStatement insertStmt = connection.prepareStatement(insertQuery)) {
-                            insertStmt.setInt(1, card.getCardID());
-                            insertStmt.setInt(2, card.getUserID());
-                            insertStmt.setString(3, card.getCardNumber());
-                            insertStmt.setString(4, card.getCardHolderName());
-                            insertStmt.setString(5, card.getExpiryDate());
-                            insertStmt.executeUpdate();
-                            isSaved = true;
-                        }
+            Gson gson = new Gson();
+            // 检查是否是新卡或更新现有卡
+            if (card.getCardID() == 0) {
+                // 加载用户的现有卡片
+                List<Card> existingCards = loadCardsByUserID(card.getUserID());
+
+                // 检查是否已存在相同的卡片
+                boolean cardExists = false;
+                for (Card existingCard : existingCards) {
+                    if (existingCard.equals(card)) { // make sure CreditCard class implements appropriate equals method
+                        // if the card already exists, update the card ID and information
+                        card.setCardID(existingCard.getCardID());
+                        cardExists = true;
+                        break;
                     }
                 }
+
+                // 如果是新卡，生成新的 cardID 并添加到用户卡片列表
+                if (!cardExists) {
+                    int newCardId = Math.toIntExact(jedis.incr("cardIDCounter"));
+                    card.setCardID(newCardId);
+                    jedis.rpush("userCards:" + card.getUserID(), String.valueOf(newCardId));
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            String cardJson = gson.toJson(card);
+            // 保存或更新卡片信息
+            jedis.set("card:" + card.getCardID(), cardJson);
+            isSaved = true;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return isSaved;
@@ -147,25 +118,19 @@ public class DataAdapter {
 
     public User loadUser(String username, String password) {
         try {
-            System.out.println("Loading user: " + username + " " + password);
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Users WHERE UserName = ? AND Password = ?");
-            statement.setString(1, username);
-            statement.setString(2, password);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                User user = new User();
-                user.setUserID(resultSet.getInt("UserID"));
-                user.setUsername(resultSet.getString("UserName"));
-                user.setPassword(resultSet.getString("Password"));
-                user.setFullName(resultSet.getString("DisplayName"));
-                resultSet.close();
-                statement.close();
+            // 从 Redis 获取用户数据
+            String userJson = jedis.get("user:" + username);
+            if (userJson != null) {
+                // 将 JSON 反序列化为 User 对象
+                User user = new Gson().fromJson(userJson, User.class);
 
-                return user;
+                // 验证密码（应使用哈希和盐进行安全验证）
+                if (user.getPassword().equals(password)) {
+                    return user;
+                }
             }
-
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return null;
@@ -174,23 +139,17 @@ public class DataAdapter {
     public List<Event> loadAllEvents() {
         List<Event> events = new ArrayList<>();
         try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM Events");
+            List<String> eventIDs = jedis.lrange("event:", 0, -1);
 
-            while (resultSet.next()) {
-                Event event = new Event();
-                event.setEventID(resultSet.getInt("eventID"));
-                event.setEventName(resultSet.getString("eventName"));
-                event.setEventDate(resultSet.getString("eventDate"));
-                event.setEventDescription(resultSet.getString("eventDescription"));
-                event.setEventLocation(resultSet.getString("eventLocation"));
-                events.add(event);
+            for (String eventID : eventIDs) {
+                String eventJson = jedis.get("event:" + eventID);
+                if (eventJson != null) {  // Check if the card data is not null
+                    events.add(new Gson().fromJson(eventJson, Event.class));
+                }
             }
-
-            resultSet.close();
-            statement.close();
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            return events;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return events;
@@ -200,108 +159,81 @@ public class DataAdapter {
         List<Ticket> tickets = new ArrayList<>();
 
         try {
-            String query = "SELECT t.TicketID, t.EventID, e.EventName, t.TicketType, t.SeatNumber, t.Price, t.TicketStatus " +
-                    "FROM Tickets t " +
-                    "JOIN Events e ON t.EventID = e.EventID " +
-                    "WHERE t.EventID = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, eventId);
-
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                Ticket ticket = new Ticket();
-
-                ticket.setTicketID(resultSet.getInt("TicketID"));
-                ticket.setEventID(resultSet.getInt("EventID"));
-                ticket.setEventName(resultSet.getString("EventName"));
-                ticket.setTicketType(resultSet.getString("TicketType"));
-                ticket.setSeatNumber(resultSet.getString("SeatNumber"));
-                ticket.setPrice(resultSet.getDouble("Price"));
-                ticket.setTicketStatus(resultSet.getString("TicketStatus")); // Setting the TicketStatus
-
-                tickets.add(ticket);
+            List<String> ticketIDs = jedis.lrange("eventTickets:" + eventId, 0, -1);
+            for (String ticketID : ticketIDs) {
+                String ticketJson = jedis.get("ticket:" + ticketID);
+                if (ticketJson != null) {  // Check if the card data is not null
+                    tickets.add(new Gson().fromJson(ticketJson, Ticket.class));
+                }
             }
-
-            resultSet.close();
-            statement.close();
-
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            return tickets;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
-
         return tickets;
     }
 
     public List<Card> loadCardsByUserID(int userID) {
-        //load cards from database by userID
-        List<Card> cards = new ArrayList<>();
         try {
-            String query = "SELECT * FROM Cards WHERE UserID = " + userID;
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+            List<String> cardIDs = jedis.lrange("userCards:" + userID, 0, -1);
+            List<Card> cards = new ArrayList<>();
 
-            while (resultSet.next()) {
-                Card card = new Card();
-                card.setCardID(resultSet.getInt(1));
-                card.setUserID(resultSet.getInt(2));
-                card.setCardNumber(resultSet.getString(3));
-                card.setCardHolderName(resultSet.getString(4));
-                card.setExpirationDate(resultSet.getString(5));
-                cards.add(card);
+            for (String cardID : cardIDs) {
+                String cardJson = jedis.get("card:" + cardID);
+                if (cardJson != null) {  // Check if the card data is not null
+                    cards.add(new Gson().fromJson(cardJson, Card.class));
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            return cards;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
-        return cards;
+        return null;
     }
 
     public void deleteCard(Card selectedCard) {
-        String query = "DELETE FROM Cards WHERE CardID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, selectedCard.getCardID());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        try {
+            // 从用户的卡列表中移除卡ID
+            jedis.lrem("userCards:" + selectedCard.getUserID(), 1, String.valueOf(selectedCard.getCardID()));
+
+            // 删除卡数据
+            jedis.del("card:" + selectedCard.getCardID());
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
     }
 
     public void deleteAddress(Address selectedAddress) {
-        String query = "DELETE FROM Addresses WHERE AddressID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, selectedAddress.getAddressID());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        try {
+            // 从用户的地址列表中移除地址ID
+            jedis.lrem("userAddresses:" + selectedAddress.getUserID(), 1, String.valueOf(selectedAddress.getAddressID()));
+
+            // 删除地址数据
+            jedis.del("address:" + selectedAddress.getAddressID());
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
     }
 
     public List<Address> loadAddressesByUserID(int userID) {
-        //load addresses from database by userID
-        List<Address> addresses = new ArrayList<>();
         try {
-            String query = "SELECT * FROM Addresses WHERE UserID = " + userID;
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+            // Fetch the list of address IDs for the user
+            List<String> addressIDs = jedis.lrange("userAddresses:" + userID, 0, -1);
 
-            while (resultSet.next()) {
-                Address address = new Address();
-                address.setAddressID(resultSet.getInt(1));
-                address.setUserID(resultSet.getInt(2));
-                address.setAddress(resultSet.getString(3), resultSet.getString(4), resultSet.getString(5), resultSet.getString(6));
-
-                addresses.add(address);
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            // Load each address by its ID
+            return addressIDs.stream().map(addressID -> {
+                String addressJson = jedis.get("address:" + addressID);
+                return new Gson().fromJson(addressJson, Address.class);
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
-        return addresses;
+        return null;
     }
 
     public boolean savePayment(Payment payment) {
@@ -326,64 +258,47 @@ public class DataAdapter {
 
 
     public boolean saveTicket(Ticket ticket) {
+        boolean isSaved = false;
         try {
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tickets WHERE TicketID = ?");
-            statement.setInt(1, ticket.getTicketID());
-            ResultSet resultSet = statement.executeQuery();
+            Gson gson = new Gson();
+            if (ticket.getTicketID() == 0) {
+                List<Ticket> existingTickets = loadTicketsByEventId(ticket.getEventID());
 
-            if (resultSet.next()) {
-                // Ticket exists, update its fields
-                statement = connection.prepareStatement("UPDATE Tickets SET EventID = ?, UserID = ?, TicketStatus = ?, SeatNumber = ?, Price = ?, TicketType = ? WHERE TicketID = ?");
-                statement.setInt(1, ticket.getEventID());
-                statement.setInt(2, ticket.getUserID());
-                statement.setString(3, ticket.getTicketStatus());
-                statement.setString(4, ticket.getSeatNumber());
-                statement.setDouble(5, ticket.getPrice());
-                statement.setString(6, ticket.getTicketType());
-                statement.setInt(7, ticket.getTicketID());
-            } else {
-                // Ticket does not exist, insert a new record
-                statement = connection.prepareStatement("INSERT INTO Tickets (TicketID, EventID, UserID, TicketStatus, SeatNumber, Price, TicketType) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                statement.setInt(1, ticket.getTicketID());
-                statement.setInt(2, ticket.getEventID());
-                statement.setInt(3, ticket.getUserID());
-                statement.setString(4, ticket.getTicketStatus());
-                statement.setString(5, ticket.getSeatNumber());
-                statement.setDouble(6, ticket.getPrice());
-                statement.setString(7, ticket.getTicketType());
+                boolean ticketExists = false;
+                for (Ticket existingTicket : existingTickets) {
+                    if (existingTicket.equals(ticket)) {
+                        // if the ticket already exists, update the ticket ID and information
+                        ticket.setTicketID(existingTicket.getTicketID());
+                        ticketExists = true;
+                        break;
+                    }
+                }
+
+                if (!ticketExists) {
+                    int newTicketId = Math.toIntExact(jedis.incr("ticketIDCounter"));
+                    ticket.setTicketID(newTicketId);
+                    jedis.rpush("eventTickets:" + ticket.getEventID(), String.valueOf(newTicketId));
+                }
             }
-            statement.executeUpdate();
-            statement.close();
-            resultSet.close();
-            return true; // save successfully
-
-        }catch (SQLException e) {
-            System.out.println("Database access error!");
+            String ticketJson = gson.toJson(ticket);
+            jedis.set("ticket:" + ticket.getTicketID(), ticketJson);
+            isSaved = true;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
-            return false; // cannot save!
         }
+        return  isSaved;
     }
 
     public Event loadEvent(int eventID) {
         try {
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Events WHERE EventID = ?");
-            statement.setInt(1, eventID);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                Event event = new Event();
-                event.setEventID(resultSet.getInt("EventID"));
-                event.setEventName(resultSet.getString("EventName"));
-                event.setEventDate(resultSet.getString("EventDate"));
-                event.setEventDescription(resultSet.getString("EventDescription"));
-                event.setEventLocation(resultSet.getString("EventLocation"));
-                resultSet.close();
-                statement.close();
-
-                return event;
+            String eventJson = jedis.get("event:" + eventID);
+            Gson gson = new Gson();
+            if (eventJson != null) {
+                return gson.fromJson(eventJson, Event.class);
             }
-
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return null;
@@ -408,113 +323,98 @@ public class DataAdapter {
 
     public Ticket loadTicket(int ticketID) {
         try {
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM Tickets WHERE TicketID = ?");
-            statement.setInt(1, ticketID);
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                Ticket ticket = new Ticket();
-                ticket.setTicketID(resultSet.getInt("TicketID"));
-                ticket.setEventID(resultSet.getInt("EventID"));
-                ticket.setUserID(resultSet.getInt("UserID"));
-                ticket.setTicketStatus(resultSet.getString("TicketStatus"));
-                ticket.setSeatNumber(resultSet.getString("SeatNumber"));
-                ticket.setPrice(resultSet.getDouble("Price"));
-                ticket.setTicketType(resultSet.getString("TicketType"));
-                resultSet.close();
-                statement.close();
-
-                return ticket;
+            String ticketJson = jedis.get("ticket:" + ticketID);
+            Gson gson = new Gson();
+            if (ticketJson != null) {
+                return gson.fromJson(ticketJson, Ticket.class);
             }
-
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
         return null;
     }
 
     public boolean saveUser(User newUser) {
-        System.out.println("Saving user: " + newUser);
+        boolean isSaved = false;
         try {
-            //randomly generates a unique userID
-            newUser.setUserID((int) (Math.random() * 1000000));
-            System.out.println("New user ID: " + newUser.getUserID());
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO Users (UserID, UserName, Password, DisplayName) VALUES (?, ?, ?, ?)");
-            statement.setInt(1, newUser.getUserID());
-            statement.setString(2, newUser.getUsername());
-            statement.setString(3, newUser.getPassword());
-            statement.setString(4, newUser.getFullName());
-            statement.execute();
-            statement.close();
-
-            return true; // save successfully!
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            Gson gson = new Gson();
+            int newID = (int) (Math.random() * 1000000);
+            String key = "user:" + newID;
+            while (jedis.exists(key)) { // 检查 key 是否存在
+                newID++; // 如果存在，newID 增加 1
+                key = "user:" + newID; // 更新 key 以匹配新的 newID
+            }
+            newUser.setUserID(newID);
+            String userJson = gson.toJson(newUser);
+            jedis.set(key,userJson);
+            isSaved = true;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
-        return false;
+        return  isSaved;
     }
 
     public boolean saveEvent(Event event) {
+        boolean isSaved = false;
         try {
-            // 检查事件是否已存在
-            String checkQuery = "SELECT * FROM Events WHERE EventID = ?";
-            PreparedStatement checkStmt = connection.prepareStatement(checkQuery);
-            checkStmt.setInt(1, event.getEventID());
-            ResultSet resultSet = checkStmt.executeQuery();
+            Gson gson = new Gson();
+            if (event.getEventID() == 0) {
+                List<Event> existingEvents = loadAllEvents();
 
-            if (resultSet.next()) {
-                // 事件已存在，执行更新操作
-                String updateQuery = "UPDATE Events SET EventName = ?, EventDate = ?, EventLocation = ?, EventDescription = ? WHERE EventID = ?";
-                PreparedStatement updateStmt = connection.prepareStatement(updateQuery);
-                updateStmt.setString(1, event.getEventName());
-                updateStmt.setString(2, event.getEventDate());
-                updateStmt.setString(3, event.getEventLocation());
-                updateStmt.setString(4, event.getEventDescription());
-                updateStmt.setInt(5, event.getEventID());
-                updateStmt.executeUpdate();
-                updateStmt.close();
-            } else {
-                // 事件不存在，执行插入操作
-                String insertQuery = "INSERT INTO Events (EventID, EventName, EventDate, EventLocation, EventDescription) VALUES (?, ?, ?, ?, ?)";
-                PreparedStatement insertStmt = connection.prepareStatement(insertQuery);
-                insertStmt.setInt(1, event.getEventID());
-                insertStmt.setString(2, event.getEventName());
-                insertStmt.setString(3, event.getEventDate());
-                insertStmt.setString(4, event.getEventLocation());
-                insertStmt.setString(5, event.getEventDescription());
-                insertStmt.executeUpdate();
-                insertStmt.close();
+                boolean eventExists = false;
+                for (Event existingEvent : existingEvents) {
+                    if (existingEvent.equals(event)) {
+                        // if the event already exists, update the event ID and information
+                        event.setEventID(existingEvent.getEventID());
+                        eventExists = true;
+                        break;
+                    }
+                }
+
+                if (!eventExists) {
+                    int newEventId = Math.toIntExact(jedis.incr("eventIDCounter"));
+                    event.setEventID(newEventId);
+                }
             }
-
-            resultSet.close();
-            checkStmt.close();
-            return true; // 操作成功
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+            String eventJson = gson.toJson(event);
+            jedis.set("event:" + event.getEventID(), eventJson);
+            isSaved = true;
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
-            return false; // 操作失败
         }
+        return  isSaved;
     }
 
     public void deleteEvent(Event event) {
-        String query = "DELETE FROM Events WHERE EventID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, event.getEventID());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        try {
+            // 从用户的卡列表中移除卡ID
+            String pattern = "eventTickets:" + event.getEventID() + "*";
+
+            Set<String> keys = jedis.keys(pattern);
+            for (String key : keys) {
+                jedis.del(key);
+            }
+
+            // 删除卡数据
+            jedis.del("event:" + event.getEventID());
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
     }
 
     public void deleteTicket(Ticket ticket) {
-        String query = "DELETE FROM Tickets WHERE TicketID = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, ticket.getTicketID());
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            System.out.println("Database access error!");
+        try {
+            // 从用户的卡列表中移除卡ID
+            jedis.lrem("eventTickets:" + ticket.getEventID(), 1, String.valueOf(ticket.getTicketID()));
+
+            // 删除卡数据
+            jedis.del("card:" + ticket.getTicketID());
+        } catch (Exception e) {
+            System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
     }
