@@ -298,12 +298,12 @@ public class DataAdapter {
         boolean isSaved = false;
         try {
             Gson gson = new Gson();
-            if (ticket.getTicketID() == 0) {
+
                 List<Ticket> existingTickets = loadTicketsByEventId(ticket.getEventID());
 
                 boolean ticketExists = false;
                 for (Ticket existingTicket : existingTickets) {
-                    if (existingTicket.equals(ticket)) {
+                    if (existingTicket.getTicketID() == ticket.getTicketID()) {
                         // if the ticket already exists, update the ticket ID and information
                         ticket.setTicketID(existingTicket.getTicketID());
                         ticketExists = true;
@@ -312,11 +312,12 @@ public class DataAdapter {
                 }
 
                 if (!ticketExists) {
-                    int newTicketId = Math.toIntExact(jedis2.incr("ticketIDCounter"));
+                    int newTicketId = ticket.getTicketID();
                     ticket.setTicketID(newTicketId);
+
                     jedis2.rpush("eventTickets:" + ticket.getEventID(), String.valueOf(newTicketId));
                 }
-            }
+
             String ticketJson = gson.toJson(ticket);
             jedis2.set("ticket:" + ticket.getTicketID(), ticketJson);
 
@@ -394,12 +395,12 @@ public class DataAdapter {
         boolean isSaved = false;
         try {
             Gson gson = new Gson();
-            if (event.getEventID() == 0) {
+
                 List<Event> existingEvents = loadAllEvents();
 
                 boolean eventExists = false;
                 for (Event existingEvent : existingEvents) {
-                    if (existingEvent.equals(event)) {
+                    if (existingEvent.getEventID() == (event.getEventID())) {
                         // if the event already exists, update the event ID and information
                         event.setEventID(existingEvent.getEventID());
                         eventExists = true;
@@ -408,13 +409,13 @@ public class DataAdapter {
                 }
 
                 if (!eventExists) {
-                    int newEventId = Math.toIntExact(jedis2.incr("eventIDCounter"));
-                    event.setEventID(newEventId);
+                    jedis2.rpush("events:" , String.valueOf(event.getEventID()));
+                    jedis2.rpush("eventTickets:" + event.getEventID(),""); // 为新事件创建空的票务列表
                 }
-            }
+
             String eventJson = gson.toJson(event);
             jedis2.set("event:" + event.getEventID(), eventJson);
-            jedis2.rpush("events:" , String.valueOf(event.getEventID()));
+
             isSaved = true;
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
@@ -425,16 +426,15 @@ public class DataAdapter {
 
     public void deleteEvent(Event event) {
         try {
-            // 从用户的卡列表中移除卡ID
-            String pattern = "eventTickets:" + event.getEventID() + "*";
 
-            Set<String> keys = jedis2.keys(pattern);
-            for (String key : keys) {
-                jedis2.del(key);
-            }
+                // 删除事件相关的票务列表
+                jedis2.del("eventTickets:" + event.getEventID());
 
-            // 删除卡数据
-            jedis2.del("event:" + event.getEventID());
+                // 从 events 列表中移除该事件的 ID
+                jedis2.lrem("events:", 1, String.valueOf(event.getEventID()));
+
+                // 删除事件本身的数据
+                jedis2.del("event:" + event.getEventID());
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
             e.printStackTrace();
@@ -443,14 +443,22 @@ public class DataAdapter {
 
     public void deleteTicket(Ticket ticket) {
         try {
-            // 从用户的卡列表中移除卡ID
+            // 从事件的票务列表中移除该票
             jedis2.lrem("eventTickets:" + ticket.getEventID(), 1, String.valueOf(ticket.getTicketID()));
 
-            // 删除卡数据
-            jedis2.del("card:" + ticket.getTicketID());
+            // 检查票务列表是否为空
+            long ticketCount = jedis2.llen("eventTickets:" + ticket.getEventID());
+            if (ticketCount == 0) {
+                // 如果票务列表为空，则保留一个空元素以保持列表存在
+                jedis2.rpush("eventTickets:" + ticket.getEventID(), "");
+            }
+
+            // 删除票数据
+            jedis2.del("ticket:" + ticket.getTicketID());
         } catch (Exception e) {
             System.out.println("Error accessing Redis!");
             e.printStackTrace();
         }
     }
+
 }
